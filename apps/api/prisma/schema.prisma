@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id       String    @id @default(uuid()) @db.Uuid
+  slug     String    @unique
+  name     String
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(uuid()) @db.Uuid
+  skuId        String   @unique @default(uuid()) @db.Uuid
+  article      String   @unique
+  name         String
+  description  String?
+  categoryId   String   @db.Uuid
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  rollLengthMm Int
+  widthMm      Int
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([categoryId, id])
+}

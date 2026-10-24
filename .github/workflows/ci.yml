@@ -1,0 +1,70 @@
+name: VEGA CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vega-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CI: 'true'
+      DATABASE_URL: postgresql://vega:vega@127.0.0.1:5432/vega_test?schema=public
+    services:
+      postgres:
+        image: postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641
+        env:
+          POSTGRES_USER: vega
+          POSTGRES_PASSWORD: vega
+          POSTGRES_DB: vega_test
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vega -d vega_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, resolved from official Git tag
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan Git history for secrets
+        run: bash scripts/scan-secrets.sh
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6, resolved from official Git tag
+        with:
+          node-version: 24.19.0
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@10.34.8
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate database client
+        run: pnpm --filter @vega/api db:generate
+      - name: Apply migrations to isolated test database
+        run: pnpm --filter @vega/api db:migrate
+      - name: Check formatting
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Check types
+        run: pnpm typecheck
+      - name: Run unit tests
+        run: pnpm test:unit
+      - name: Run database integration tests
+        run: pnpm test:integration
+      - name: Build API, admin and mobile web export
+        run: pnpm build
+      - name: Audit all workspace dependencies
+        run: pnpm audit --audit-level high
