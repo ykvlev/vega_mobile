@@ -4,8 +4,8 @@
 
 ## Итог
 
-Этап 0 принят документарно. Этап 1 реализован, но **BLOCKED**: две high
-уязвимости в Expo CLI без найденного совместимого официального исправления.
+Этап 0 принят документарно. Этап 1 реализован, но **BLOCKED**: одна high
+уязвимость node-forge в Expo CLI без принятого upstream исправления.
 QA/критик завершили независимые проверки; аудиту не делались исключения.
 Не начинать зависимый этап 2 в обход gate. Допустима работа над устранением blocker.
 
@@ -28,7 +28,7 @@ Expo58/RN0.88 mobile shell, SQL migration, ограничение положит
 Нет реализации login, заказа, 1С, оплаты, 3D и финального дизайна.
 
 Локально: frozen install, cloud install, migrations, format/lint/types,
-unit4 и integration5 (skipped0), API/admin builds и mobile web export PASS.
+unit4 + tooling6 и integration5 (skipped0), API/admin builds и mobile web export PASS.
 Штатные API/admin/Metro startup и внутренние HTTP-запросы проверены.
 Native Android/iOS и запуск на Windows не проверены. Windows test-launch,
 .env и telemetry дефекты исправлены с независимым retest.
@@ -42,8 +42,8 @@ cleanup проходит targeted mobile typecheck; финальный push по
 ## Оставшиеся блокеры
 
 - node-forge1.4.0: GHSA-86w9-cpqp-85rv через Expo CLI/signing.
-- Zod3.25.76: GHSA-mrhx-c7xc-m3w5 через Expo CLI/devtools.
-  Локальный полный audit и audit--prod подтверждают2HIGH. Multer исправлен override2.5.0;
+- Zod GHSA-mrhx-c7xc-m3w5 ЗАКРЫТА scoped override4.6.7 с реальными CLI/regression tests.
+  Последний полный audit подтверждает1HIGH forge. Multer исправлен override2.5.0;
   общий контракт использует Zod4.6.7. Не отключать audit и не патчить криптографию вслепую.
 - API branch-protection403: текущему GitHub-подключению не доступны Administration
   endpoints. Main protections не настроены и не подтверждены; PR остаётся draft.
@@ -75,3 +75,17 @@ Cloud draft install_script/start_skill и network additions сохранены, 
 подтверждённое совместимое исправление, повторить audit и затронутые проверки.
 После устранения security blockers — независимый QA на новом SHA и только затем
 готовность этапа1. Не переводить PR ready/merge и не деплоить при FAIL/BLOCKED.
+
+## Последующее устранение Zod blocker
+
+В этой ревизии package/lock/test:unit обновлены: настоящий scoped Zod4.6.7,
+новый scripts/expo-cli-compat.test.mjs с6 обязательными проверками; lint включает
+scripts, CI full audit вместо --prod. Установка frozen, unit4+tooling6, export и
+свежий devHTTP прошли, fullaudit1HIGH. Подробности новых независимых reviews
+в последних разделах STAGE-1-QA/REVIEW; старые manifests относятся к старым SHA.
+Новый source push запускает CI; результаты проверять по PR head, не переносить
+прохождение старых40098273270/40098276494 на новую ревизию автоматически.
+
+ForgePR1152/1158 не merged; version1.4.1-0 в upstreammain не устраняет конкретный
+defect. Не ставить его ради зелёного audit. Не начинать этап2 без закрытия gate.
+Cloud start_skill обновлён: один blocker и полный audit; сохранение не публикация.

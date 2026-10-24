@@ -61,7 +61,7 @@ pnpm typecheck
 pnpm test:unit
 pnpm test:integration
 pnpm build
-pnpm audit --prod --audit-level high
+pnpm audit --audit-level high
 ```
 
 Перед API typecheck/build выполнить `db:generate` (root scripts также генерируют
@@ -90,7 +90,7 @@ x86_64 и существующего Git HEAD, скачивает закрепл
 ## Ограничения
 
 Актуальный статус, результаты и блокеры этапа 1 — `docs/STAGE-1.md`.
-В частности, известные high advisory в инструментах Expo не считаются исправленными
+В частности, известный high advisory node-forge в инструментах Expo не считаются исправленными
 потому, что они не входят в серверный runtime. Политика аудита не ослаблена.
 
 Секреты не коммитить. Сторонние inputs/references не публиковать автоматически.
@@ -99,3 +99,8 @@ x86_64 и существующего Git HEAD, скачивает закрепл
 если не намерены удалить локальные данные.
 
 Начать с `docs/HANDOFF.md`, `docs/DECISIONS.md` и `docs/ROADMAP.md`.
+
+Для исправления GHSA-mrhx-c7xc-m3w5 задан scoped override Expo CLI на Zod 4.6.7.
+`pnpm test:tooling` проверяет фактическую зависимость CLI, его схемы и security
+regression; команда включена в обязательный `test:unit`. Это проверенная
+совместимость конкретных путей, не обещание поддержки Expo semver/native/MCP transport.

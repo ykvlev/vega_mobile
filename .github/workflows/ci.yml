@@ -66,5 +66,5 @@ jobs:
         run: pnpm test:integration
       - name: Build API, admin and mobile web export
         run: pnpm build
-      - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level high
+      - name: Audit all workspace dependencies
+        run: pnpm audit --audit-level high
