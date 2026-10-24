@@ -4,7 +4,12 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { loadConfig } = require('../dist/config.js');
-const { HealthController } = require('../dist/controllers.js');
+const {
+  HealthController,
+  ProductsController,
+  escapeLikeLiteral,
+} = require('../dist/controllers.js');
+const { validateDemoSeedConfig } = require('../dist/demo-seed.js');
 const valid = {
   APP_MODE: 'demo',
   COMMERCE_ENABLED: 'false',
@@ -53,4 +58,43 @@ test('liveness is independent of database and readiness masks internal connectio
     return true;
   });
   assert.equal(queries, 1);
+});
+
+test('LIKE input is escaped as a literal and malformed queries never touch the database', async () => {
+  assert.equal(escapeLikeLiteral('x%_\\end'), 'x\\%\\_\\\\end');
+  let queries = 0;
+  const controller = new ProductsController({
+    prisma: {
+      product: {
+        async findMany() {
+          queries += 1;
+          return [];
+        },
+      },
+    },
+  });
+  for (const query of [
+    { price: '1' },
+    { q: ['a', 'b'] },
+    { limit: ['1', '2'] },
+    { categoryId: 'bad' },
+  ]) {
+    await assert.rejects(
+      controller.list(query),
+      (error) => error.getStatus() === 400,
+    );
+  }
+  assert.equal(queries, 0);
+});
+
+test('demo seed additionally refuses ordinary database names before opening a connection', () => {
+  assert.equal(validateDemoSeedConfig(valid).mode, 'demo');
+  for (const patch of [
+    { DATABASE_URL: 'postgresql://localhost/vega' },
+    { DATABASE_URL: 'postgresql://localhost/vega_test_backup' },
+    { NODE_ENV: 'production' },
+    { APP_MODE: 'production' },
+    { COMMERCE_ENABLED: 'true' },
+  ])
+    assert.throws(() => validateDemoSeedConfig({ ...valid, ...patch }));
 });

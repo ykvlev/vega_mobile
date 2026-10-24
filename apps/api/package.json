@@ -13,7 +13,8 @@
     "test:unit": "pnpm build && node --test test/unit.test.mjs",
     "test:integration": "pnpm build && node --test --test-concurrency=1 test/integration.test.mjs",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy"
+    "db:migrate": "prisma migrate deploy",
+    "demo:seed": "pnpm build && node dist/demo-seed-cli.js"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

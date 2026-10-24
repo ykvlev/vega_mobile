@@ -36,6 +36,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@vega/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@vega/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
@@ -5799,9 +5802,7 @@ snapshots:
       metro-runtime: 0.87.1
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
