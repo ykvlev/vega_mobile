@@ -17,12 +17,12 @@
     "test:integration": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api test:integration",
     "build": "pnpm build:contracts && pnpm --filter @vega/api build && pnpm build:admin && pnpm build:mobile",
     "dev:api": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api dev",
-    "dev:admin": "dotenv -v NEXT_TELEMETRY_DISABLED=1 -- pnpm --filter @vega/admin dev",
-    "dev:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -- pnpm --filter @vega/mobile start",
+    "dev:admin": "dotenv -v NEXT_TELEMETRY_DISABLED=1 -v NODE_ENV=development -- pnpm --filter @vega/admin dev",
+    "dev:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -v NODE_ENV=development -- pnpm --filter @vega/mobile start",
     "db:generate": "pnpm --filter @vega/api db:generate",
     "db:migrate": "dotenv -e .env -- pnpm --filter @vega/api db:migrate",
-    "build:admin": "dotenv -v NEXT_TELEMETRY_DISABLED=1 -- pnpm --filter @vega/admin build",
-    "build:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -- pnpm --filter @vega/mobile build",
+    "build:admin": "dotenv -v NEXT_TELEMETRY_DISABLED=1 -v NODE_ENV=production -- pnpm --filter @vega/admin build",
+    "build:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -v NODE_ENV=production -- pnpm --filter @vega/mobile build",
     "test:tooling": "node --test scripts/expo-cli-compat.test.mjs"
   },
   "devDependencies": {
