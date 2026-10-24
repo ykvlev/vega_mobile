@@ -12,3 +12,6 @@ apps/api/src/generated/
 Thumbs.db
 inputs/
 references/
+
+test-results/
+playwright-report/
