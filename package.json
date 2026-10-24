@@ -1,0 +1,40 @@
+{
+  "name": "vega-mobile-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.8",
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "pnpm": "10.34.8"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint apps packages --max-warnings 0",
+    "build:contracts": "pnpm --filter @vega/contracts build",
+    "typecheck": "pnpm build:contracts && pnpm -r typecheck",
+    "test:unit": "pnpm build:contracts && pnpm -r --if-present test:unit",
+    "test:integration": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api test:integration",
+    "build": "pnpm build:contracts && pnpm --filter @vega/api build && pnpm build:admin && pnpm build:mobile",
+    "dev:api": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api dev",
+    "dev:admin": "dotenv -v NEXT_TELEMETRY_DISABLED=1 -- pnpm --filter @vega/admin dev",
+    "dev:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -- pnpm --filter @vega/mobile start",
+    "db:generate": "pnpm --filter @vega/api db:generate",
+    "db:migrate": "dotenv -e .env -- pnpm --filter @vega/api db:migrate",
+    "build:admin": "dotenv -v NEXT_TELEMETRY_DISABLED=1 -- pnpm --filter @vega/admin build",
+    "build:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -- pnpm --filter @vega/mobile build"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "dotenv-cli": "11.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@nestjs/platform-express>multer": "2.5.0"
+    }
+  }
+}

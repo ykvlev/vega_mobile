@@ -1,0 +1,63 @@
+export interface AppConfig {
+  readonly mode: 'demo';
+  readonly commerceEnabled: false;
+  readonly databaseUrl: string;
+  readonly databaseSchema: string;
+  readonly port: number;
+  readonly databaseTimeoutMs: number;
+}
+
+function integer(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  if (value === undefined) return fallback;
+  if (!/^\d+$/.test(value)) throw new Error('Invalid integer configuration');
+  const number = Number(value);
+  if (!Number.isSafeInteger(number) || number < min || number > max) {
+    throw new Error('Configuration integer out of range');
+  }
+  return number;
+}
+
+export function loadConfig(environment: NodeJS.ProcessEnv): AppConfig {
+  if (
+    environment.APP_MODE !== 'demo' ||
+    environment.COMMERCE_ENABLED !== 'false'
+  ) {
+    throw new Error(
+      'Only explicitly configured demo mode with commerce disabled is supported',
+    );
+  }
+  if (environment.NODE_ENV === 'production') {
+    throw new Error('Production is unavailable at bootstrap stage');
+  }
+  if (!environment.DATABASE_URL) throw new Error('DATABASE_URL is required');
+  let url: URL;
+  try {
+    url = new URL(environment.DATABASE_URL);
+  } catch {
+    throw new Error('Invalid database configuration');
+  }
+  if (
+    !['postgres:', 'postgresql:'].includes(url.protocol) ||
+    !url.hostname ||
+    url.pathname === '/'
+  ) {
+    throw new Error('Invalid database configuration');
+  }
+  const databaseSchema = url.searchParams.get('schema') ?? 'public';
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(databaseSchema)) {
+    throw new Error('Invalid database schema');
+  }
+  return Object.freeze({
+    mode: 'demo',
+    commerceEnabled: false,
+    databaseUrl: environment.DATABASE_URL,
+    databaseSchema,
+    port: integer(environment.PORT, 3001, 0, 65535),
+    databaseTimeoutMs: integer(environment.DB_TIMEOUT_MS, 2000, 100, 10000),
+  });
+}
