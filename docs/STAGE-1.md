@@ -78,3 +78,34 @@ Native Android/iOS и выполнение на Windows в этой Linux-сес
 
 Для будущих окружений сохраняются install/start инструкции; живые процессы
 не считаются переживающими snapshot. Production и пользовательские данные не используются.
+
+## Фактическая публикация bootstrap
+
+- Baseline этапа 0: main, commit 9a18b225f3a555586823272190516989fc020c68.
+- Bootstrap: ветка feat/stage-1-bootstrap, commit 593688d18918df9f69e3bda0dcd6253d7096eac5.
+- Draft PR: https://github.com/ykvlev/vega_mobile/pull/1 — не слит.
+- Реальный push CI: https://github.com/ykvlev/vega_mobile/actions/runs/40082362353
+- Реальный PR CI: https://github.com/ykvlev/vega_mobile/actions/runs/40082401387
+
+Оба run завершились FAILURE: установка, scanner, миграции, форматирование, lint,
+типы, unit/integration и три сборки SUCCESS; audit FAILURE. В скачанном журнале
+push run подтверждены оба указанных GHSA и `Severity: 2 high`. Пропущен лишь
+служебный post setup-node, не обязательные тесты. Последующая штатная нормализация
+Expo tsconfig/удаление expo-env при отключённых typed routes прошла независимый
+typecheck и review; после commit/push ей требуется новый CI, смотреть PR checks.
+
+Branch protection не прочитан/не настроен: API возвращает 403 Resource not
+accessible by integration. Для required quality/review нужны Administration
+permissions соответствующего GitHub-подключения либо ручная настройка владельцем.
+Нельзя утверждать, что main технически защищена. В репозитории пока один владелец:
+для внешнего обязательного одобрения нужен отдельный reviewer.
+
+Сохранён draft cloud-конфигурации: install_script, start_skill и добавления
+binaries.prisma.sh, api.github.com, results-receiver.actions.githubusercontent.com
+с сохранением прежних доменов. Это не публикация snapshot; для будущих задач
+проверить и сохранить изменения в environment settings, затем опубликовать среду.
+
+Штатный Metro startup в offline/CI режиме проверен: /status200 и /200 с VEGA.
+Необязательный standalone desktop React Native DevTools попытался использовать
+readonly HOME cache и переключился на fallback. Native debugger не проверен;
+это ограничение headless cloud, не выданное за успешную нативную сессию.

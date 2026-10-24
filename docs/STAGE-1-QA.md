@@ -105,3 +105,63 @@ de5871e381adfdcc45716be888f83ccd77018fe887afb0daccb922911a0371e2  package.json
 Изменение затронутых исходников, lockfile или workflow требует оценки влияния
 и соответствующего retest. Отчёт не обещает отсутствия всех багов; фиксирует
 выполненные проверки, открытые дефекты и пределы допуска.
+
+## Дополнение: фактические удалённые проверки
+
+2026-10-24: bootstrap опубликован в draft
+[PR #1](https://github.com/ykvlev/vega_mobile/pull/1), проверенный head
+`593688d18918df9f69e3bda0dcd6253d7096eac5`. Этот раздел обновляет прежние отметки
+«HEAD отсутствует для bootstrap» и «remote CI не выполнен»; остальные пределы
+допуска сохраняются. Хэши всех шести ключевых исходников manifest выше повторно
+сверены и не изменились; исходники ради этого отчёта не менялись.
+
+QA независимо прочитал `gh run view --json headSha,status,conclusion,jobs`:
+
+| Запуск | Commit | Результат |
+|---|---|---|
+| [Push 40082362353](https://github.com/ykvlev/vega_mobile/actions/runs/40082362353) | `593688d18918df9f69e3bda0dcd6253d7096eac5` | Completed / FAILURE |
+| [PR 40082401387](https://github.com/ykvlev/vega_mobile/actions/runs/40082401387) | Тот же head | Completed / FAILURE |
+
+В обоих jobs `quality` GitHub API подтверждает success для secret scan, pinned
+toolchain/frozen install, Prisma generate/migrate, format/lint/types, unit,
+integration и сборок API/admin/mobile web. Единственный неуспешный основной шаг —
+`Audit production dependencies`. Пропущен только post-step cleanup setup-node,
+а не обязательный тест. Содержимое remote audit logs пока не прочитано из-за
+сетевого ограничения скачивания; конкретные advisories выше подтверждены
+локально, а не приписаны непрочитанным удалённым логам.
+
+Дополнительно QA прочитал локальный полный audit (включая devDependencies):
+`/workspace/reference-research/stage1/audit-all.json` — HIGH 2, остальные уровни 0.
+Оркестратор сообщил локальный gitleaks по двум коммитам с проверенным release
+checksum и без находок; remote secret scan независимо подтверждён step success.
+
+Защита ветки не подтверждена и не считается настроенной: endpoint изменения
+branch protection вернул оркестратору 403 `Resource not accessible by integration`.
+Неуспех job не доказывает технический запрет merge без required checks/ruleset.
+Native, staging/production и store release по-прежнему не выполнены.
+
+**Итог остаётся BLOCKED:** runtime CI теперь действительно выполнен и сохранил
+security failure. Изменение только этого отчёта создаст следующий commit/run;
+результат будущего запуска не предполагается заранее.
+
+## Дополнение: Expo dev startup и нормализация TypeScript
+
+После описанного remote head оркестратор запустил `CI=1 pnpm dev:mobile --offline`
+и сообщил `/status` 200 и `/` 200 с VEGA. QA не выдаёт эти HTTP-запросы за свой
+повторный запуск. Expo при старте нормализовал `apps/mobile/tsconfig.json`, удалив
+include для `expo-env.d.ts` и `.expo/types/**/*.ts`, а также удалил tracked
+`apps/mobile/expo-env.d.ts`, содержавший единственный reference на `expo/types`.
+
+QA независимо просмотрел фактический diff и установленный код Expo CLI:
+`startTypescriptTypeGeneration` при выключенном `experiments.typedRoutes` удаляет
+эти generated type includes/env-файл. В текущем app.json typedRoutes не включён;
+`app/**/*.ts` и `app/**/*.tsx`, strict и noEmit сохранены. Нового дефекта
+bootstrap в этой нормализации не найдено. Независимый targeted retest
+`pnpm --filter @vega/mobile typecheck` завершился exit 0. Новый хэш tsconfig:
+`4285e7ba8bb341087f34c399682d086b1dc0b8bd847dd208a8b3da9dd766a10b`.
+
+Это отдельное изменение исходной конфигурации после remote commit выше;
+предыдущие remote runs не доказывают проверку этой правки. Требуется следующий CI.
+Предупреждение загрузки desktop RN DevTools в недоступный headless cache не
+считается проверкой native debugging; обхода подписи/проверок загрузки не делалось.
+Общий вердикт **BLOCKED** и открытые security findings не изменены.
