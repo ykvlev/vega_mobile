@@ -57,3 +57,33 @@ admin build и mobile web export. После исправления runner backe
 audit, удалённые проверки и применимые runtime gates остаются в своих явных
 статусах. Независимая разработка может продолжаться, готовность этапа не следует
 объявлять вопреки QA/security gate.
+
+## Delta review: scoped Zod override и полный аудит
+
+Проверены только изменения package.json, pnpm-lock.yaml, CI, README и новый
+`scripts/expo-cli-compat.test.mjs`. Это дополнение уточняет прежнюю запись
+«две high»: finding Zod закрыт, остаётся одна high node-forge. Общий PASS
+этапа по-прежнему не выдан.
+
+- Scoped override `@expo/cli>zod: 4.6.7` согласован с lockfile: связь CLI
+  переведена с 3.25.76 на 4.6.7; старая версия удалена из lockfile. Подмены
+  `require`, hook или реэкспорта v3 API в проверенном delta нет.
+- Тест разрешает фактическую установленную Expo CLI из mobile workspace и
+  загружает настоящие CLI schemas/output parser. Проверены версия и Zod v4,
+  readonly descriptor, enum/type/strictness, JSON schema, output/errors и
+  bounded-array security regression. Независимый запуск reviewer:
+  `node --test scripts/expo-cli-compat.test.mjs` — **6 passed, 0 failed,
+  0 skipped**, exit 0. Зависимости и файлы приложения не изменялись.
+- `test:tooling` входит в обязательный root `test:unit`; lint охватывает scripts.
+  CI и README используют `pnpm audit --audit-level high` без `--prod`, поэтому
+  dev dependencies не исключаются из security gate. Сохраняющийся node-forge
+  блокирует gate; успешные тесты не маскируют advisory.
+- README ограничивает утверждение проверенными CLI-путями и не обещает native
+  либо живой MCP transport. Frozen install, mobile export и dev HTTP 200
+  подтверждены командой, не повторялись reviewer в этом delta.
+
+Новых конкретных bugs или вводящих в заблуждение утверждений в проверенном delta
+не обнаружено. Semver-major override требует сохранения этих регрессий при
+обновлениях Expo; шесть тестов не доказывают все возможные CLI/native сценарии.
+Windows/native, удалённый CI/enforcement и открытый node-forge остаются отдельными
+непройденными/заблокированными проверками.

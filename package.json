@@ -10,10 +10,10 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint apps packages --max-warnings 0",
+    "lint": "eslint apps packages scripts --max-warnings 0",
     "build:contracts": "pnpm --filter @vega/contracts build",
     "typecheck": "pnpm build:contracts && pnpm -r typecheck",
-    "test:unit": "pnpm build:contracts && pnpm -r --if-present test:unit",
+    "test:unit": "pnpm build:contracts && pnpm -r --if-present test:unit && pnpm test:tooling",
     "test:integration": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api test:integration",
     "build": "pnpm build:contracts && pnpm --filter @vega/api build && pnpm build:admin && pnpm build:mobile",
     "dev:api": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api dev",
@@ -22,7 +22,8 @@
     "db:generate": "pnpm --filter @vega/api db:generate",
     "db:migrate": "dotenv -e .env -- pnpm --filter @vega/api db:migrate",
     "build:admin": "dotenv -v NEXT_TELEMETRY_DISABLED=1 -- pnpm --filter @vega/admin build",
-    "build:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -- pnpm --filter @vega/mobile build"
+    "build:mobile": "dotenv -v EXPO_NO_TELEMETRY=1 -- pnpm --filter @vega/mobile build",
+    "test:tooling": "node --test scripts/expo-cli-compat.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -34,7 +35,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@nestjs/platform-express>multer": "2.5.0"
+      "@nestjs/platform-express>multer": "2.5.0",
+      "@expo/cli>zod": "4.6.7"
     }
   }
 }

@@ -7,9 +7,12 @@
 ## Вердикт
 
 **BLOCKED для завершения этапа и продвижения через обязательный security gate.**
-Функциональные проверки ниже выполнены, но audit завершился с двумя HIGH.
+Функциональные проверки выполнены, но audit актуального снимка содержит один
+HIGH (`node-forge`). Первоначальные два HIGH и последующие исправления описаны
+ниже хронологически; актуальный manifest и закрытие Zod — в последнем дополнении.
 Неисправленные advisories не исключены из gate и не превращены в known-issue PASS.
-Удалённый GitHub CI, enforcement и native builds не проверены.
+Удалённый CI выполнен для исторических commit согласно дополнениям ниже;
+enforcement и native builds не проверены.
 
 Исходники проверены независимо от авторов: root scripts, workflow, API controllers,
 config/database, миграция/тесты, общий DTO, стартовые экраны admin/mobile.
@@ -165,3 +168,56 @@ bootstrap в этой нормализации не найдено. Незави
 Предупреждение загрузки desktop RN DevTools в недоступный headless cache не
 считается проверкой native debugging; обхода подписи/проверок загрузки не делалось.
 Общий вердикт **BLOCKED** и открытые security findings не изменены.
+
+## Дополнение: исправление Zod и новый проверенный снимок
+
+2026-10-24: владелец добавил ограниченный override `@expo/cli>zod: 4.6.7`.
+Это реальная замена зависимости, а не alias, module hook, подмена схем или
+исключение из audit. QA просмотрел package/lock и compatibility test:
+`zod@3` в lock больше нет, Expo CLI разрешает настоящий Zod 4.6.7.
+Root `test:unit` обязательно запускает `test:tooling`; lint включает scripts.
+
+QA независимо выполнил:
+
+- `pnpm test:tooling`: **PASS 6/6**, failed/skipped/cancelled = 0. Проверены
+  реальные модули Expo CLI: plugin descriptors, readonly environments, optional
+  MCP schema/JSON Schema, output schema и parser/error issues. Regression
+  constrained array отклоняет oversized input до per-element parsing.
+- `pnpm audit --audit-level high --json`: **FAIL, exit 1, HIGH 1**, остальные
+  уровни 0. Остался только `expo → @expo/cli → node-forge@1.4.0`,
+  GHSA-86w9-cpqp-85rv. Zod advisory отсутствует в полном audit, не только prod.
+
+Дополнительно прочитаны сохранённые root logs в
+`/workspace/reference-research/stage1/`: unit-after-zod.log (4 прежних unit +
+6 tooling PASS), mobile-zod4-export.log (успешный web export),
+mobile-zod4-dev.log (Metro bundling после запуска). HTTP 200 root проверил отдельно;
+QA не выдаёт это за собственный HTTP retest. Финальный SIGTERM dev-процесса
+после smoke не интерпретируется как успешное завершение команды; это долгоживущий
+сервер. Optional RN DevTools headless warning сохраняется, live MCP transport,
+native debugging и Android/iOS этим не проверены.
+
+**Zod finding закрыт для проверенного bootstrap/CLI объёма:** advisory устранён
+в реальной установке, затронутые модули и security regression проверены независимо,
+экспорт/старт подтверждены отдельными свидетельствами. Это не обещание полной
+совместимости всех будущих optional integrations. CI должен повторить весь набор
+после push нового commit; прежние remote runs этот lockfile не проверяли.
+Неизменённые DB/admin suites локально повторно не запускались.
+
+Финальный source CI использует шаг `Audit all workspace dependencies` и
+`pnpm audit --audit-level high`, включая devDependencies. Старое имя шага и
+prod-only команда выше относятся к историческим runs, а не к текущему workflow.
+Проверка не отключена и её порог не ослаблен.
+
+Новый manifest **заменяет прежний package/lock/config снимок**, а не объявляет
+старые remote результаты проверкой новых зависимостей:
+
+```text
+26f391fdf17f7a01a12c9b80449e708d312be7a002a0b3299e8f8d37706806df  package.json
+8e6abb2872e9ab156c3922062b80559e4a46f5876248fcfdaf2812a217405459  pnpm-lock.yaml
+3cb3e72828b60b4c04781349f543b061824a4c93e45a69b74dc50e50bd2f9b8c  scripts/expo-cli-compat.test.mjs
+0cd3f01fe92f1f6a1fc761ea024536a3a1755b0cc1e6894e209acfe57bf3c5af  apps/mobile/tsconfig.json
+0e341aa5fc5807c7ac9519001f83af944a78b822020619ec5053231a1e1dd402  .github/workflows/ci.yml
+```
+
+Общий вердикт остаётся **BLOCKED — один HIGH node-forge**, без ослабления audit
+и без общего security/runtime/production PASS.
