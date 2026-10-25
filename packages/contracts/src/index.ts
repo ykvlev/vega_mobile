@@ -55,6 +55,50 @@ export const PublicCategoryListSchema = z.strictObject({
 export type PublicProductList = z.infer<typeof PublicProductListSchema>;
 export type PublicCategoryList = z.infer<typeof PublicCategoryListSchema>;
 
+// Bounded RU formatting only; password content is deliberately never trimmed.
+export const AuthPhoneSchema = z
+  .string()
+  .max(32)
+  .trim()
+  .regex(
+    /^(?:\+7|8)[ -]?(?:\([0-9]{3}\)|[0-9]{3})[ -]?[0-9]{3}[ -]?[0-9]{2}[ -]?[0-9]{2}$/,
+  )
+  .transform((phone) => phone.replace(/[ ()-]/g, '').replace(/^8/, '+7'));
+export const AuthPasswordSchema = z
+  .string()
+  .max(256)
+  .refine((password) => {
+    const points = Array.from(password);
+    if (points.length < 15 || points.length > 128) return false;
+    let bytes = 0;
+    for (const point of points) {
+      const code = point.codePointAt(0)!;
+      if (code >= 0xd800 && code <= 0xdfff) return false;
+      bytes += code <= 0x7f ? 1 : code <= 0x7ff ? 2 : code <= 0xffff ? 3 : 4;
+    }
+    return bytes <= 512;
+  });
+export const AuthCredentialsSchema = z.strictObject({
+  phone: AuthPhoneSchema,
+  password: AuthPasswordSchema,
+});
+export const AuthUserSchema = z.strictObject({
+  id: z.uuid(),
+  phone: z.string().regex(/^\+7[0-9]{10}$/),
+  role: z.literal('customer'),
+  phoneVerified: z.literal(false),
+});
+export const AuthResponseSchema = z.strictObject({
+  user: AuthUserSchema,
+  session: z.strictObject({
+    token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+    expiresAt: z.iso.datetime(),
+  }),
+});
+export const AuthMeResponseSchema = z.strictObject({ user: AuthUserSchema });
+export type AuthCredentials = z.infer<typeof AuthCredentialsSchema>;
+export type AuthUser = z.infer<typeof AuthUserSchema>;
+
 // Explicit allowlist: even a future ORM model with commercial fields stays private.
 export function toPublicProduct(source: unknown): PublicProduct {
   if (typeof source !== 'object' || source === null) {

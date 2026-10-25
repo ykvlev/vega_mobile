@@ -5,6 +5,9 @@ export interface AppConfig {
   readonly databaseSchema: string;
   readonly port: number;
   readonly databaseTimeoutMs: number;
+  readonly auth:
+    | { readonly enabled: false }
+    | { readonly enabled: true; readonly rateLimitSecret: string };
 }
 
 function integer(
@@ -52,6 +55,26 @@ export function loadConfig(environment: NodeJS.ProcessEnv): AppConfig {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(databaseSchema)) {
     throw new Error('Invalid database schema');
   }
+  if (![undefined, 'false', 'true'].includes(environment.AUTH_DEMO_ENABLED)) {
+    throw new Error('Invalid demo authentication configuration');
+  }
+  const authEnabled = environment.AUTH_DEMO_ENABLED === 'true';
+  const rateLimitSecret = environment.AUTH_RATE_LIMIT_SECRET;
+  if (authEnabled) {
+    const databaseName = decodeURIComponent(url.pathname.slice(1));
+    if (!/_(?:test|demo)$/.test(databaseName))
+      throw new Error('Demo authentication requires an isolated database');
+    if (
+      !rateLimitSecret ||
+      !rateLimitSecret.trim() ||
+      Buffer.byteLength(rateLimitSecret, 'utf8') < 32 ||
+      Buffer.byteLength(rateLimitSecret, 'utf8') > 1024
+    ) {
+      throw new Error(
+        'Demo authentication requires a strong rate-limit secret',
+      );
+    }
+  }
   return Object.freeze({
     mode: 'demo',
     commerceEnabled: false,
@@ -59,5 +82,8 @@ export function loadConfig(environment: NodeJS.ProcessEnv): AppConfig {
     databaseSchema,
     port: integer(environment.PORT, 3001, 0, 65535),
     databaseTimeoutMs: integer(environment.DB_TIMEOUT_MS, 2000, 100, 10000),
+    auth: authEnabled
+      ? { enabled: true as const, rateLimitSecret: rateLimitSecret! }
+      : { enabled: false as const },
   });
 }

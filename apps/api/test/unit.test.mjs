@@ -10,6 +10,14 @@ const {
   escapeLikeLiteral,
 } = require('../dist/controllers.js');
 const { validateDemoSeedConfig } = require('../dist/demo-seed.js');
+const {
+  PasswordHasher,
+  BoundedKdf,
+  KdfBusyError,
+  DUMMY_PASSWORD_HASH,
+} = require('../dist/auth-password.js');
+const { normalizeSource, tokenDigest } = require('../dist/auth-service.js');
+const { isAuthPath } = require('../dist/auth-errors.js');
 const valid = {
   APP_MODE: 'demo',
   COMMERCE_ENABLED: 'false',
@@ -97,4 +105,85 @@ test('demo seed additionally refuses ordinary database names before opening a co
     { COMMERCE_ENABLED: 'true' },
   ])
     assert.throws(() => validateDemoSeedConfig({ ...valid, ...patch }));
+});
+
+test('authentication is disabled by default and enabling it requires isolated database plus server secret', () => {
+  assert.deepEqual(loadConfig(valid).auth, { enabled: false });
+  for (const patch of [
+    { AUTH_DEMO_ENABLED: 'yes' },
+    { AUTH_DEMO_ENABLED: 'true' },
+    { AUTH_DEMO_ENABLED: 'true', AUTH_RATE_LIMIT_SECRET: 'short' },
+    { AUTH_DEMO_ENABLED: 'true', AUTH_RATE_LIMIT_SECRET: ' '.repeat(64) },
+    {
+      AUTH_DEMO_ENABLED: 'true',
+      AUTH_RATE_LIMIT_SECRET: 'x'.repeat(32),
+      DATABASE_URL: 'postgresql://localhost/vega',
+    },
+  ])
+    assert.throws(() => loadConfig({ ...valid, ...patch }));
+  assert.equal(
+    loadConfig({
+      ...valid,
+      AUTH_DEMO_ENABLED: 'true',
+      AUTH_RATE_LIMIT_SECRET: 'x'.repeat(32),
+    }).auth.enabled,
+    true,
+  );
+  assert.equal(normalizeSource('::ffff:127.0.0.1'), '127.0.0.1');
+  assert.equal(normalizeSource('::1'), '::1');
+  assert.equal(tokenDigest('a').length, 64);
+  assert.equal(isAuthPath('/API/V1/AUTH/login?irrelevant=true'), true);
+  assert.equal(isAuthPath('/api/v1/me/'), true);
+});
+
+test('bounded KDF admits one running plus two queued operations and releases the slot after failures', async () => {
+  const limiter = new BoundedKdf();
+  let release;
+  const held = new Promise((resolve) => {
+    release = resolve;
+  });
+  const order = [];
+  const first = limiter.run(async () => {
+    order.push(1);
+    await held;
+    return 1;
+  });
+  const second = limiter.run(async () => {
+    order.push(2);
+    throw new Error('Expected test failure');
+  });
+  const secondRejected = assert.rejects(second, /Expected test failure/);
+  const third = limiter.run(async () => {
+    order.push(3);
+    return 3;
+  });
+  await assert.rejects(
+    limiter.run(async () => 4),
+    KdfBusyError,
+  );
+  assert.deepEqual(order, [1]);
+  release();
+  assert.equal(await first, 1);
+  await secondRejected;
+  assert.equal(await third, 3);
+  assert.equal(await limiter.run(async () => 5), 5);
+  assert.deepEqual(order, [1, 2, 3]);
+});
+
+test('actual scrypt uses fixed memory parameters, random salt and constant-length comparison without trimming password', async () => {
+  const hasher = new PasswordHasher();
+  const password = '  demo password preserving spaces  ';
+  const hash = await hasher.hash(password);
+  assert.notEqual(await hasher.hash(password), hash);
+  assert.match(
+    hash,
+    /^scrypt\$131072\$8\$1\$[A-Za-z0-9_-]{22}\$[A-Za-z0-9_-]{86}$/,
+  );
+  assert.equal(await hasher.verify(password, hash), true);
+  assert.equal(await hasher.verify(password.trim(), hash), false);
+  assert.equal(await hasher.verify(password, DUMMY_PASSWORD_HASH), false);
+  assert.equal(
+    await hasher.verify(password, 'invalid-encoded-password-hash'),
+    false,
+  );
 });
