@@ -202,7 +202,7 @@ test('guest preview discloses no commercial values and has no private API traffi
   expect(apiRequests).toEqual([]);
 });
 
-test('keyboard login dialog receives focus and restores its trigger', async ({
+test('keyboard profile link opens the connected account screen', async ({
   page,
 }) => {
   await openPreview(page);
@@ -210,17 +210,15 @@ test('keyboard login dialog receives focus and restores its trigger', async ({
     .getByRole('navigation', { name: 'Основная навигация' })
     .getByRole('button', { name: 'Профиль', exact: true })
     .click();
-  const login = page.getByRole('button', { name: 'Войти', exact: true });
+  const login = page.getByRole('link', { name: 'Войти', exact: true });
+  await expect(login).toHaveAttribute('href', '/account');
   await login.focus();
   await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog', { name: 'Вход в VEGA' });
-  await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('Вход в этом прототипе не подключён.');
-  const close = dialog.getByRole('button', { name: 'Понятно', exact: true });
-  await expect(close).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(dialog).not.toBeVisible();
-  await expect(login).toBeFocused();
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(
+    page.getByRole('textbox', { name: 'Телефон', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Пароль', { exact: true })).toBeVisible();
 });
 
 test('320 px viewport remains within the screen across the main flow', async ({

@@ -27,7 +27,8 @@
     "build:tokens": "pnpm --filter @vega/design-tokens build",
     "test:design": "playwright test --config apps/admin/test/playwright.config.ts",
     "test:catalog": "dotenv -e .env -- playwright test --config apps/admin/test/catalog-lab.config.ts",
-    "demo:catalog:seed": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api demo:seed"
+    "demo:catalog:seed": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api demo:seed",
+    "test:account": "dotenv -e .env -- playwright test --config apps/admin/test/account.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

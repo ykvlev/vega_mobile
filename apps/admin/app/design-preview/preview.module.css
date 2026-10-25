@@ -17,6 +17,7 @@
   box-sizing: border-box;
 }
 .preview button,
+.preview a,
 .preview input {
   font: inherit;
 }
@@ -25,6 +26,10 @@
   color: inherit;
   border: 0;
 }
+.preview a {
+  text-decoration: none;
+}
+.preview a:focus-visible,
 .preview button:focus-visible,
 .preview input:focus-visible {
   outline: 2px solid #fff;

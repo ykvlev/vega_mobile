@@ -1,0 +1,493 @@
+.account {
+  --account-bg: #080808;
+  --account-surface: #171719;
+  --account-raised: #202023;
+  --account-text: #f7f7f8;
+  --account-muted: #b5b5be;
+  --account-primary: #f5f5f7;
+  min-height: 100vh;
+  background: var(--account-bg);
+  color: var(--account-text);
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 0 28px;
+}
+.account * {
+  box-sizing: border-box;
+}
+.account h1,
+.account h2,
+.account p,
+.account dl,
+.account dd {
+  margin: 0;
+}
+.account a:focus-visible,
+.account button:focus-visible,
+.account input:focus-visible {
+  outline: 3px solid #f5f5f7;
+  outline-offset: 5px;
+}
+.account button,
+.account input {
+  font: inherit;
+}
+.shell {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+.header {
+  height: 100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.brand {
+  display: flex;
+  align-items: flex-start;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  min-height: 44px;
+  padding: 7px 0;
+}
+.brand span {
+  font-size: 10px;
+  padding: 4px 0 0 4px;
+  letter-spacing: 0;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  font-size: 12px;
+  color: var(--account-muted);
+}
+.main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 42px;
+  align-items: start;
+  padding: 32px 0 64px;
+}
+.intro {
+  min-height: 690px;
+  padding: 44px 30px;
+  border-radius: 38px;
+  background: #191d1c;
+  position: relative;
+  overflow: hidden;
+}
+.eyebrow {
+  font-size: 10px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  color: var(--account-muted);
+}
+.intro h2 {
+  position: relative;
+  z-index: 1;
+  margin: 28px 0 22px;
+  font-size: clamp(40px, 4.5vw, 62px);
+  line-height: 1.01;
+  letter-spacing: -0.06em;
+  font-weight: 750;
+}
+.intro h2 span {
+  color: #a4b0a9;
+}
+.introText {
+  position: relative;
+  z-index: 1;
+  font-size: 14px;
+  color: #b5beb8;
+}
+.introFoot {
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #a9b2ab;
+}
+.sculpture {
+  position: absolute;
+  bottom: 100px;
+  right: 65px;
+  height: 260px;
+  display: flex;
+  gap: 16px;
+  transform: rotate(-25deg);
+}
+.sculpture i {
+  width: 76px;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #333a36,
+    #aab7ac 44%,
+    #55645a 64%,
+    #26372c
+  );
+  border-radius: 42% / 7%;
+  border-top: 1px solid #ffffff60;
+}
+.sculpture i:nth-child(2) {
+  background: linear-gradient(
+    90deg,
+    #44484d,
+    #b2b8bd 44%,
+    #626b75 64%,
+    #282d36
+  );
+  transform: translateY(38px);
+}
+.sculpture i:nth-child(3) {
+  background: linear-gradient(
+    90deg,
+    #675a50,
+    #c9ad96 44%,
+    #8f7761 64%,
+    #352b23
+  );
+  transform: translateY(76px);
+}
+.panel {
+  padding: 35px 28px 32px;
+  min-width: 0;
+}
+.panel h1 {
+  font-size: clamp(38px, 4.8vw, 62px);
+  line-height: 1.01;
+  font-weight: 780;
+  letter-spacing: -0.06em;
+  margin: 22px 0;
+  overflow-wrap: anywhere;
+}
+.description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--account-muted);
+  max-width: 380px;
+}
+.form {
+  margin-top: 30px;
+}
+.fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 24px;
+}
+.field {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dddde2;
+}
+.field > input,
+.passwordRow {
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  background: var(--account-surface);
+  border: 1px solid #777780;
+  border-radius: 17px;
+  color: var(--account-text);
+}
+.field > input {
+  padding: 15px 16px;
+  font-size: 15px;
+}
+.field input::placeholder {
+  color: #92929d;
+}
+.field input[aria-invalid='true'] {
+  border-color: #ffabab;
+}
+.passwordRow {
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+}
+.passwordRow input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  color: inherit;
+  padding: 15px 16px;
+  border: 0;
+  border-radius: 16px;
+  min-height: 52px;
+  font-size: 15px;
+}
+.passwordRow button {
+  min-height: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: #b5b5be;
+  cursor: pointer;
+}
+.hint {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #a5a5b0;
+}
+.fieldError {
+  color: #ffabab;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 54px;
+  width: 100%;
+  padding: 16px 22px;
+  border: 0;
+  border-radius: 30px;
+  background: var(--account-primary);
+  color: #111113;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  cursor: pointer;
+  text-align: left;
+}
+.primary > span {
+  font-size: 21px;
+  font-weight: 400;
+}
+.primary:hover {
+  background: #dcdce0;
+}
+.primary:disabled,
+.secondary:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.fields:disabled input {
+  opacity: 0.65;
+}
+.error {
+  color: #ffb7b7;
+  background: #301f22;
+  border-radius: 16px;
+  padding: 15px;
+  margin-top: 18px !important;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.switch {
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px !important;
+  color: var(--account-muted);
+}
+.switch a {
+  color: #f7f7f8;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.switch > span {
+  display: inline-flex;
+  align-items: center;
+}
+.footerNote {
+  color: #a5a5b0;
+  font-size: 10px;
+  line-height: 1.6;
+  max-width: 340px;
+  margin: 22px auto 0 !important;
+  text-align: center;
+}
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  border-top: 1px solid #343439;
+  padding: 24px 0 30px;
+  color: #a5a5b0;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.avatar {
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--account-raised);
+  color: #dddde2;
+  margin-top: 26px;
+}
+.profile {
+  padding: 26px 0;
+  display: grid;
+  gap: 24px;
+}
+.profile div {
+  min-width: 0;
+}
+.profile dt {
+  color: var(--account-muted);
+  font-size: 11px;
+  margin-bottom: 9px;
+}
+.profile dd {
+  color: #f7f7f8;
+  font-size: 18px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.unverified {
+  display: inline-block;
+  background: #302b20;
+  color: #ffe29a;
+  border-radius: 20px;
+  font-size: 11px;
+  padding: 9px 13px;
+}
+.profileNote {
+  color: var(--account-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0 26px !important;
+}
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  width: 100%;
+  border: 1px solid #777780;
+  background: transparent;
+  color: #f7f7f8;
+  border-radius: 28px;
+  font-size: 13px !important;
+  cursor: pointer;
+  padding: 14px 20px;
+}
+.logoutForm {
+  margin-top: 20px;
+}
+.sessionNote {
+  font-size: 12px;
+  color: #ffe29a;
+  background: #302b20;
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 20px !important;
+}
+.loading {
+  padding: 80px 0;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.loading h1 {
+  font-size: clamp(36px, 6vw, 60px);
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+  margin: 24px 0;
+}
+.loading p {
+  color: var(--account-muted);
+  font-size: 14px;
+}
+@media (max-width: 760px) {
+  .account {
+    padding: 0 20px;
+  }
+  .header {
+    height: 84px;
+  }
+  .brand {
+    font-size: 29px;
+  }
+  .main {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 8px 0 36px;
+  }
+  .intro {
+    display: none;
+  }
+  .panel {
+    background: var(--account-surface);
+    border-radius: 30px;
+    padding: 30px 24px;
+  }
+  .panel h1 {
+    font-size: 48px;
+  }
+  .description {
+    font-size: 13px;
+  }
+  .field > input,
+  .passwordRow {
+    background: #111113;
+  }
+  .profile {
+    padding-bottom: 20px;
+  }
+  .footer {
+    margin-top: 0;
+    font-size: 9px;
+  }
+}
+@media (max-width: 350px) {
+  .account {
+    padding: 0 16px;
+  }
+  .panel {
+    padding: 28px 20px;
+  }
+  .panel h1 {
+    font-size: 41px;
+  }
+  .eyebrow {
+    font-size: 9px;
+  }
+  .field > input,
+  .passwordRow input {
+    padding-left: 12px;
+    font-size: 14px;
+  }
+  .hint {
+    font-size: 10px;
+  }
+  .switch {
+    font-size: 11px;
+    gap: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .account * {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
