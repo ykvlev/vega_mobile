@@ -188,6 +188,16 @@ test(
     });
     const resetRates = () =>
       admin.query(`DELETE FROM "${schema}"."AuthRateLimit"`);
+    async function avoidRateWindowBoundary(seconds) {
+      const { rows } = await admin.query('SELECT clock_timestamp() AS now');
+      const now = new Date(rows[0].now).getTime();
+      assert(Number.isFinite(now), 'Rate test requires a valid database clock');
+      const windowMs = seconds * 1000;
+      const remainingMs = windowMs - (now % windowMs);
+      // Exercise a single genuine fixed window without overriding application time.
+      // The wait is at most five seconds, including the boundary margin.
+      if (remainingMs < 4950) await delay(remainingMs + 50);
+    }
     let environment;
     async function startApi(extra = {}) {
       const port = await freePort();
@@ -536,6 +546,7 @@ test(
         'phone login budget is atomic across API processes and forwarded IP spoofing does not bypass it',
         async () => {
           await resetRates();
+          await avoidRateWindowBoundary(900);
           const identity = '+79990000003';
           const results = await Promise.all(
             Array.from({ length: 8 }, (_, index) =>
@@ -583,6 +594,7 @@ test(
         'source login budget is shared across identities and spoofed forwarding headers',
         async () => {
           await resetRates();
+          await avoidRateWindowBoundary(900);
           const results = await Promise.all(
             Array.from({ length: 21 }, (_, index) =>
               request(
@@ -626,6 +638,7 @@ test(
         'registration budget is also shared across processes and normalized duplicate phones',
         async () => {
           await resetRates();
+          await avoidRateWindowBoundary(3600);
           const results = await Promise.all(
             Array.from({ length: 4 }, (_, index) =>
               request(
