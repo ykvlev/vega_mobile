@@ -111,8 +111,9 @@ function code(result, status, expectedCode) {
   );
 }
 
-function userDto(user, expectedPhone) {
+function userDto(user, expectedPhone, expectedAccess = 'pending') {
   assert.deepEqual(Object.keys(user).sort(), [
+    'commercialAccessStatus',
     'id',
     'phone',
     'phoneVerified',
@@ -121,6 +122,7 @@ function userDto(user, expectedPhone) {
   assert.match(user.id, /^[0-9a-f-]{36}$/i);
   assert.equal(user.phone, expectedPhone);
   assert.equal(user.role, 'customer');
+  assert.equal(user.commercialAccessStatus, expectedAccess);
   assert.equal(user.phoneVerified, false);
 }
 
@@ -268,6 +270,7 @@ test(
           );
           assert.equal(users.rowCount, 1);
           const stored = users.rows[0];
+          assert.equal(stored.commercialAccessStatus, 'pending');
           assert.notEqual(stored.passwordHash, password);
           const fields = stored.passwordHash.split('$');
           assert.deepEqual(fields.slice(0, 4), ['scrypt', '131072', '8', '1']);
@@ -372,6 +375,8 @@ test(
           );
           for (const patch of [
             { role: 'admin' },
+            { commercialAccessStatus: 'approved' },
+            { managerId: '11111111-1111-4111-8111-111111111111' },
             { phoneVerified: true },
             { customerType: 'business' },
             { phone: '+18005550001' },
@@ -481,6 +486,34 @@ test(
             400,
             'VALIDATION_FAILED',
           );
+        },
+      );
+
+      await t.test(
+        'commercial approval changes are read from the current database for an existing session, never granted by registration',
+        async () => {
+          for (const status of ['approved', 'rejected', 'revoked', 'pending']) {
+            await admin.query(
+              `UPDATE "${schema}"."User" SET "commercialAccessStatus"=$1 WHERE phone=$2`,
+              [status, phone],
+            );
+            for (const api of [first, second]) {
+              const me = await request(api.base, '/api/v1/me', {
+                token: loginToken,
+              });
+              assert.equal(me.status, 200);
+              userDto(me.body.user, phone, status);
+            }
+            if (status === 'approved') {
+              await resetRates();
+              const login = await request(second.base, '/api/v1/auth/login', {
+                method: 'POST',
+                body: { phone, password },
+              });
+              assert.equal(login.status, 200);
+              userDto(login.body.user, phone, 'approved');
+            }
+          }
         },
       );
 

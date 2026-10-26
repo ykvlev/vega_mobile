@@ -26,6 +26,7 @@ type SessionUser = {
   phone: string;
   role: string;
   phoneVerified: boolean;
+  commercialAccessStatus: string;
 };
 
 export class AuthService {
@@ -134,8 +135,15 @@ export class AuthService {
               passwordHash,
               role: 'customer',
               phoneVerified: false,
+              commercialAccessStatus: 'pending',
             },
-            select: { id: true, phone: true, role: true, phoneVerified: true },
+            select: {
+              id: true,
+              phone: true,
+              role: true,
+              phoneVerified: true,
+              commercialAccessStatus: true,
+            },
           });
           return this.session(user, tx);
         });
@@ -171,6 +179,7 @@ export class AuthService {
         phone: user.phone,
         role: user.role,
         phoneVerified: user.phoneVerified,
+        commercialAccessStatus: user.commercialAccessStatus,
       });
     } catch (error) {
       this.safeFailure(error);
@@ -187,7 +196,13 @@ export class AuthService {
         where: { tokenHash: tokenDigest(token) },
         include: {
           user: {
-            select: { id: true, phone: true, role: true, phoneVerified: true },
+            select: {
+              id: true,
+              phone: true,
+              role: true,
+              phoneVerified: true,
+              commercialAccessStatus: true,
+            },
           },
         },
       });

@@ -116,17 +116,29 @@ export default async function AccountPage({
                       {view.user.role === 'manager' ? 'Сотрудник' : 'Клиент'}
                     </dd>
                   </div>
+                  <div>
+                    <dt>Коммерческий доступ</dt>
+                    <dd>
+                      {
+                        {
+                          pending: 'Ожидает одобрения менеджером',
+                          approved: 'Одобрен менеджером',
+                          rejected: 'Доступ не одобрен',
+                          revoked: 'Доступ отозван',
+                        }[view.user.commercialAccessStatus]
+                      }
+                    </dd>
+                  </div>
                 </dl>
                 <p className={s.profileNote}>
                   Подтверждение номера и восстановление доступа ещё не
                   подключены. Цены, остатки и оформление заказа на этом этапе
                   недоступны.
                 </p>
-                {view.user.role === 'manager' && (
-                  <Link className={s.primary} href="/admin">
-                    Открыть админку
-                  </Link>
-                )}
+                <p className={s.profileNote}>
+                  Менеджер сам закрепляет клиента за собой. Работа сотрудников с
+                  клиентами и заказами будет проходить в 1С.
+                </p>
                 <LogoutForm />
               </>
             ) : view.kind === 'unavailable' ? (
@@ -181,6 +193,12 @@ export default async function AccountPage({
                 {view.kind === 'expired' && (
                   <p className={s.sessionNote} role="status">
                     Сеанс завершён. Войдите снова.
+                  </p>
+                )}
+                {mode === 'register' && (
+                  <p className={s.profileNote}>
+                    После регистрации менеджер проверит аккаунт. Цены и наличие
+                    откроются после его одобрения. Выбирать менеджера не нужно.
                   </p>
                 )}
                 <CredentialsForm key={mode} mode={mode} />

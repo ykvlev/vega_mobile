@@ -306,9 +306,9 @@ export default function DesignPreview() {
     if (!product) return;
     const value = Number(quantity);
     if (
-      !Number.isFinite(value) ||
+      !Number.isSafeInteger(value) ||
       value <= 0 ||
-      (unit === 'roll' && !Number.isInteger(value))
+      (unit === 'meter' && value > 18)
     )
       return;
     const lineId = `${product.id}:${unit}`;
@@ -343,8 +343,8 @@ export default function DesignPreview() {
   );
   const quantityValid =
     Number(quantity) > 0 &&
-    Number.isFinite(Number(quantity)) &&
-    (unit === 'meter' || Number.isInteger(Number(quantity)));
+    Number.isSafeInteger(Number(quantity)) &&
+    (unit === 'roll' || Number(quantity) <= 18);
 
   function ProductCard({ item }: { item: DemoPublicProduct }) {
     return (
@@ -451,7 +451,7 @@ export default function DesignPreview() {
                   </div>
                   <p className={s.lockedInfo}>
                     <Icon name="profile" size={18} />
-                    Коммерческие условия — после входа в рабочем приложении.
+                    Цены и наличие — после одобрения менеджером.
                   </p>
                   <div className={s.segmented} aria-label="Формат подбора">
                     <button
@@ -473,19 +473,43 @@ export default function DesignPreview() {
                       Рулоны
                     </button>
                   </div>
-                  <label className={s.quantityLabel}>
-                    {unit === 'meter'
-                      ? 'Количество метров'
-                      : 'Количество рулонов'}
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      min={unit === 'meter' ? '0.1' : '1'}
-                      step={unit === 'meter' ? 'any' : '1'}
-                      value={quantity}
-                      onChange={(event) => setQuantity(event.target.value)}
-                    />
-                  </label>
+                  {unit === 'meter' ? (
+                    <fieldset className={s.meterChoices}>
+                      <legend>Длина отреза</legend>
+                      <div>
+                        {Array.from(
+                          { length: 18 },
+                          (_, index) => index + 1,
+                        ).map((meters) => (
+                          <button
+                            key={meters}
+                            type="button"
+                            aria-pressed={quantity === String(meters)}
+                            onClick={() => setQuantity(String(meters))}
+                          >
+                            {meters} м
+                          </button>
+                        ))}
+                      </div>
+                      <p className={s.finePrint}>
+                        Локальный подбор метража. Наличие отрезов здесь не
+                        проверяется; в рабочем каталоге оно доступно после
+                        одобрения менеджером и проверки 1С.
+                      </p>
+                    </fieldset>
+                  ) : (
+                    <label className={s.quantityLabel}>
+                      Количество рулонов
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        step="1"
+                        value={quantity}
+                        onChange={(event) => setQuantity(event.target.value)}
+                      />
+                    </label>
+                  )}
                   <button
                     className={s.primaryButton}
                     onClick={addSelection}
@@ -720,7 +744,7 @@ export default function DesignPreview() {
               )}
               <p className={s.finePrint}>
                 Демонстрационные названия и цвета. Коммерческие условия доступны
-                только после входа в рабочем приложении.
+                только после одобрения менеджером.
               </p>
             </>
           ) : tab === 'studio' ? (
@@ -883,8 +907,9 @@ export default function DesignPreview() {
                 </div>
                 <h2>Знакомство начинается здесь.</h2>
                 <p>
-                  В рабочем приложении после входа будут доступны коммерческие
-                  условия, история заказов и связь с менеджером.
+                  После регистрации менеджер проверит аккаунт. Коммерческие
+                  условия станут доступны после его одобрения; выбирать
+                  менеджера при регистрации не нужно.
                 </p>
                 <a className={s.whiteButton} href="/account">
                   Войти

@@ -82,10 +82,17 @@ export const AuthCredentialsSchema = z.strictObject({
   phone: AuthPhoneSchema,
   password: AuthPasswordSchema,
 });
+export const CommercialAccessStatusSchema = z.enum([
+  'pending',
+  'approved',
+  'rejected',
+  'revoked',
+]);
 export const AuthUserSchema = z.strictObject({
   id: z.uuid(),
   phone: z.string().regex(/^\+7[0-9]{10}$/),
   role: z.enum(['customer', 'manager']),
+  commercialAccessStatus: CommercialAccessStatusSchema,
   phoneVerified: z.literal(false),
 });
 export const AuthResponseSchema = z.strictObject({
@@ -239,3 +246,5 @@ export function toPublicProduct(source: unknown): PublicProduct {
     widthMm: product.widthMm,
   });
 }
+
+export * from './sale-rules';

@@ -46,6 +46,8 @@ test('password preserves spaces and enforces Unicode and byte boundaries; client
   assert.equal(AuthPasswordSchema.safeParse('x'.repeat(15)).success, true);
   for (const extra of [
     { role: 'admin' },
+    { commercialAccessStatus: 'approved' },
+    { managerId: '11111111-1111-4111-8111-111111111111' },
     { phoneVerified: true },
     { customerType: 'business' },
   ]) {
@@ -66,5 +68,40 @@ test('password preserves spaces and enforces Unicode and byte boundaries; client
       phoneVerified: true,
     }).success,
     false,
+  );
+});
+
+test('commercial access is explicit and independent of phone verification or staff role', () => {
+  const base = {
+    id: '11111111-1111-4111-8111-111111111111',
+    phone: '+79991234567',
+    role: 'customer',
+    phoneVerified: false,
+  };
+  for (const commercialAccessStatus of [
+    'pending',
+    'approved',
+    'rejected',
+    'revoked',
+  ]) {
+    assert.equal(
+      AuthUserSchema.parse({ ...base, commercialAccessStatus })
+        .commercialAccessStatus,
+      commercialAccessStatus,
+    );
+  }
+  assert.equal(AuthUserSchema.safeParse(base).success, false);
+  assert.equal(
+    AuthUserSchema.safeParse({ ...base, commercialAccessStatus: 'unknown' })
+      .success,
+    false,
+  );
+  assert.equal(
+    AuthUserSchema.parse({
+      ...base,
+      role: 'manager',
+      commercialAccessStatus: 'pending',
+    }).commercialAccessStatus,
+    'pending',
   );
 });

@@ -113,6 +113,7 @@ test('explicit public characteristics are bounded and cannot use internal/commer
       phone: '+79991234567',
       role: 'manager',
       phoneVerified: false,
+      commercialAccessStatus: 'pending',
     }).success,
     true,
   );
