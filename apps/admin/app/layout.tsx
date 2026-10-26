@@ -3,8 +3,9 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'VEGA — рабочее пространство',
-  description: 'Основа административной панели VEGA. Среда разработки.',
+  title: 'VEGA — автомобильные плёнки',
+  description:
+    'Каталог автомобильных плёнок VEGA. Демонстрационная версия интерфейса.',
   robots: { index: false, follow: false },
 };
 

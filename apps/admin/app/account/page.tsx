@@ -1,6 +1,4 @@
-import type { CSSProperties } from 'react';
 import Link from 'next/link';
-import { darkColors } from '@vega/design-tokens';
 import { accountView } from './session';
 import { CredentialsForm, LogoutForm } from './forms';
 import s from './account.module.css';
@@ -21,19 +19,7 @@ export default async function AccountPage({
   const mode = query.mode === 'register' ? 'register' : 'login';
   const view = await accountView();
   return (
-    <div
-      className={s.account}
-      style={
-        {
-          '--account-bg': darkColors.canvas,
-          '--account-surface': darkColors.surface,
-          '--account-raised': darkColors.surfaceRaised,
-          '--account-text': darkColors.textPrimary,
-          '--account-muted': darkColors.textSecondary,
-          '--account-primary': darkColors.primary,
-        } as CSSProperties
-      }
-    >
+    <div className={s.account}>
       <div className={s.shell}>
         <header className={s.header}>
           <Link
@@ -44,7 +30,7 @@ export default async function AccountPage({
             VEGA<span>®</span>
           </Link>
           <Link className={s.back} href="/design-preview">
-            К приложению
+            Назад
             <svg
               width="17"
               height="17"
@@ -54,30 +40,11 @@ export default async function AccountPage({
               strokeWidth="1.6"
               aria-hidden="true"
             >
-              <path d="M6 18 18 6M6 6h12v12" />
+              <path d="M20 12H4m6-6-6 6 6 6" />
             </svg>
           </Link>
         </header>
         <main id="main" className={s.main}>
-          <div className={s.intro}>
-            <p className={s.eyebrow}>VEGA / личное пространство</p>
-            <h2>
-              Ваш цвет.
-              <br />
-              <span>Ваш характер.</span>
-            </h2>
-            <p className={s.introText}>
-              Начните с собственного аккаунта.
-              <br />
-              Всё остальное — впереди.
-            </p>
-            <div className={s.sculpture} aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </div>
-            <span className={s.introFoot}>ЦВЕТ. ФОРМА. ХАРАКТЕР.</span>
-          </div>
           <section className={s.panel} aria-labelledby="account-title">
             {view.kind === 'authenticated' ? (
               <>
@@ -136,8 +103,7 @@ export default async function AccountPage({
                   недоступны.
                 </p>
                 <p className={s.profileNote}>
-                  Менеджер сам закрепляет клиента за собой. Работа сотрудников с
-                  клиентами и заказами будет проходить в 1С.
+                  Менеджера назначит VEGA. Выбирать его самостоятельно не нужно.
                 </p>
                 <LogoutForm />
               </>
@@ -167,18 +133,7 @@ export default async function AccountPage({
                   {mode === 'register' ? 'Новый аккаунт' : 'С возвращением'}
                 </p>
                 <h1 id="account-title">
-                  {mode === 'register' ? (
-                    <>
-                      Начнём
-                      <br />
-                      знакомство.
-                    </>
-                  ) : (
-                    <>
-                      Вход
-                      <br />в VEGA.
-                    </>
-                  )}
+                  {mode === 'register' ? 'Регистрация' : 'Вход в VEGA'}
                 </h1>
                 <p className={s.description}>
                   {mode === 'register'

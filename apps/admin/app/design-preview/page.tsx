@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import Image from 'next/image';
-import { darkColors, radii, spacing } from '@vega/design-tokens';
 import { demoProducts, type DemoPublicProduct } from './fixtures';
 import s from './preview.module.css';
 
@@ -31,10 +30,10 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
     ),
     catalog: (
       <>
-        <rect x="3" y="3" width="7" height="7" rx="2" />
-        <rect x="14" y="3" width="7" height="7" rx="2" />
-        <rect x="3" y="14" width="7" height="7" rx="2" />
-        <rect x="14" y="14" width="7" height="7" rx="2" />
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
       </>
     ),
     studio: (
@@ -95,7 +94,7 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.25"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -369,21 +368,7 @@ export default function DesignPreview() {
   }
 
   return (
-    <div
-      className={s.preview}
-      style={
-        {
-          '--preview-bg': darkColors.canvas,
-          '--preview-card': darkColors.surface,
-          '--preview-raised': darkColors.surfaceRaised,
-          '--preview-text': darkColors.textPrimary,
-          '--preview-muted': darkColors.textSecondary,
-          '--preview-primary': darkColors.primary,
-          '--preview-radius': `${radii.card}px`,
-          '--preview-gap': `${spacing.md}px`,
-        } as CSSProperties
-      }
-    >
+    <div className={`${s.preview} ${!product && tab === 'home' ? s.home : ''}`}>
       <div className={s.prototypeBar}>
         <span className={s.prototypeDot} />
         Дизайн-прототип · демонстрационные товары
@@ -544,42 +529,52 @@ export default function DesignPreview() {
                     alt="Авторская визуальная концепция автомобиля в графитовом цвете"
                     className={s.heroPhoto}
                     fill
-                    sizes="(max-width: 700px) 100vw, 1060px"
+                    sizes="100vw"
                     unoptimized
                     preload
                     onError={() => setHeroImageFailed(true)}
                   />
                 )}
                 <div className={s.heroShade} aria-hidden="true" />
-                <div className={s.heroTop}>
-                  <span className={s.eyebrow}>Плёнки VEGA</span>
-                  <span className={s.outlineTag}>Ваша следующая форма</span>
+                <div className={s.heroTop} aria-label="Коллекции плёнки">
+                  {[
+                    { label: 'Все плёнки', category: 'Все' },
+                    { label: 'Прозрачная', category: 'Прозрачная' },
+                    { label: 'Color', category: 'Color' },
+                    { label: 'Ultima', category: 'Ultima' },
+                  ].map((collection) => (
+                    <button
+                      key={collection.category}
+                      onClick={() => {
+                        setCategory(collection.category);
+                        navigate('catalog');
+                      }}
+                    >
+                      {collection.label}
+                    </button>
+                  ))}
                 </div>
-                <h1 ref={heading} tabIndex={-1}>
-                  Другой цвет.
-                  <br />
-                  <span>Ваш характер.</span>
-                </h1>
-                <p className={s.heroDescription}>
-                  Найдите свой оттенок.
-                  <br />
-                  Соберите новый образ автомобиля.
-                </p>
+                <div className={s.heroCampaign}>
+                  <h1 ref={heading} tabIndex={-1}>
+                    Цвет меняет всё
+                  </h1>
+                  <p className={s.heroDescription}>
+                    Коллекция автомобильных плёнок
+                  </p>
+                  <button
+                    className={s.heroLink}
+                    onClick={() => navigate('catalog')}
+                  >
+                    Выбрать плёнку
+                  </button>
+                </div>
                 {heroImageFailed && (
                   <Car className={s.heroCar} color="#77817c" />
                 )}
                 <div className={s.heroBottom}>
-                  <button
-                    className={s.whiteButton}
-                    onClick={() => navigate('catalog')}
-                  >
-                    Выбрать плёнку
-                    <Icon name="arrow" size={20} />
-                  </button>
+                  <span className={s.heroWordmark}>VEGA</span>
                   <span className={s.heroFootnote}>
-                    Авторская иллюстрация
-                    <br />
-                    Цветовая концепция
+                    Авторская цветовая концепция
                   </span>
                 </div>
               </section>
@@ -655,7 +650,7 @@ export default function DesignPreview() {
                 </button>
               </div>
               <div className={s.productGrid}>
-                {demoProducts.slice(0, 3).map((item) => (
+                {demoProducts.slice(0, 4).map((item) => (
                   <ProductCard key={item.id} item={item} />
                 ))}
               </div>
@@ -680,12 +675,10 @@ export default function DesignPreview() {
             </>
           ) : tab === 'catalog' ? (
             <>
-              <div className={s.pageHeading}>
-                <p className={s.eyebrow}>Материал для вашего проекта</p>
+              <div className={`${s.pageHeading} ${s.catalogHeading}`}>
                 <h1 ref={heading} tabIndex={-1}>
                   Каталог.
                 </h1>
-                <p className={s.muted}>Выберите оттенок. Рассмотрите детали.</p>
               </div>
               <label className={s.search}>
                 <Icon name="search" />
@@ -959,7 +952,7 @@ export default function DesignPreview() {
                   </span>
                 )}
               </span>
-              <span>{item.label}</span>
+              <span className={s.srOnly}>{item.label}</span>
             </button>
           ))}
         </nav>

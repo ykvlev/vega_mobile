@@ -1,8 +1,7 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { productMediaPaths } from '../media-url';
-import { darkColors } from '@vega/design-tokens';
 import {
   CatalogReadError,
   catalogHref,
@@ -37,17 +36,7 @@ function ArrowOut() {
 
 function Frame({ children }: { children: ReactNode }) {
   return (
-    <div
-      className={s.lab}
-      style={
-        {
-          '--lab-bg': darkColors.canvas,
-          '--lab-surface': darkColors.surface,
-          '--lab-text': darkColors.textPrimary,
-          '--lab-muted': darkColors.textSecondary,
-        } as CSSProperties
-      }
-    >
+    <div className={s.lab}>
       <div className={s.inner}>
         <header className={s.header}>
           <span className={s.brand}>
