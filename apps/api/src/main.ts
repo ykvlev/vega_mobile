@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app';
 import { loadConfig } from './config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { isAuthPath, SafeApiExceptionFilter } from './auth-errors';
+import { isAuthPath, isAdminPath, SafeApiExceptionFilter } from './auth-errors';
 
 async function main(): Promise<void> {
   const config = loadConfig(process.env);
@@ -25,6 +25,16 @@ async function main(): Promise<void> {
       next();
     },
   );
+  // Rich but bounded catalog text needs more space; authentication remains 8 KiB.
+  app.useBodyParser('json', {
+    limit: '64kb',
+    strict: true,
+    type: (request: { url?: string; headers: { 'content-type'?: string } }) =>
+      isAdminPath(request.url ?? '') &&
+      /^application\/json(?:\s*;|$)/i.test(
+        request.headers['content-type'] ?? '',
+      ),
+  });
   app.useBodyParser('json', { limit: '8kb', strict: true });
   app.useGlobalFilters(new SafeApiExceptionFilter());
   app.enableShutdownHooks();

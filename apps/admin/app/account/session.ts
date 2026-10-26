@@ -72,7 +72,7 @@ export async function requireActionOrigin(): Promise<void> {
   }
 }
 
-async function sessionToken(): Promise<string | null> {
+export async function sessionToken(): Promise<string | null> {
   const values = (await cookies()).getAll(SESSION_COOKIE);
   if (values.length !== 1 || !TOKEN_PATTERN.test(values[0]!.value)) return null;
   return values[0]!.value;

@@ -3,6 +3,7 @@ import type { AppConfig } from './config';
 import { DatabaseService } from './database';
 import { AuthController, MeController } from './auth-controller';
 import { AuthService } from './auth-service';
+import { AdminController } from './admin-controller';
 import {
   HealthController,
   ProductsController,
@@ -15,6 +16,7 @@ export class AppModule {
     return {
       module: AppModule,
       controllers: [
+        AdminController,
         HealthController,
         ProductsController,
         CategoriesController,

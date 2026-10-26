@@ -112,7 +112,9 @@ export default async function AccountPage({
                   </div>
                   <div>
                     <dt>Тип доступа</dt>
-                    <dd>Клиент</dd>
+                    <dd>
+                      {view.user.role === 'manager' ? 'Сотрудник' : 'Клиент'}
+                    </dd>
                   </div>
                 </dl>
                 <p className={s.profileNote}>
@@ -120,6 +122,11 @@ export default async function AccountPage({
                   подключены. Цены, остатки и оформление заказа на этом этапе
                   недоступны.
                 </p>
+                {view.user.role === 'manager' && (
+                  <Link className={s.primary} href="/admin">
+                    Открыть админку
+                  </Link>
+                )}
                 <LogoutForm />
               </>
             ) : view.kind === 'unavailable' ? (
