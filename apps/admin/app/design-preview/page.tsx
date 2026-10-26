@@ -245,6 +245,7 @@ function Film({
 
 export default function DesignPreview() {
   const [tab, setTab] = useState<Tab>('home');
+  const [navigationVersion, setNavigationVersion] = useState(0);
   const [product, setProduct] = useState<DemoPublicProduct | null>(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Все');
@@ -270,6 +271,14 @@ export default function DesignPreview() {
     (control ?? heading.current)?.focus();
   }, [selection]);
 
+  // Move focus in the navigation commit, before the next keyboard action can
+  // target a link. A deferred animation frame could steal that link's focus.
+  useLayoutEffect(() => {
+    if (navigationVersion === 0) return;
+    heading.current?.focus();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [navigationVersion]);
+
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: 'home', label: 'Главная', icon: 'home' },
     { id: 'catalog', label: 'Каталог', icon: 'catalog' },
@@ -282,10 +291,7 @@ export default function DesignPreview() {
     setTab(next);
     setProduct(null);
     setAnnouncement('');
-    requestAnimationFrame(() => {
-      heading.current?.focus();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    });
+    setNavigationVersion((version) => version + 1);
   }
 
   function openProduct(next: DemoPublicProduct) {
@@ -293,10 +299,7 @@ export default function DesignPreview() {
     setUnit('meter');
     setQuantity('1');
     setAnnouncement('');
-    requestAnimationFrame(() => {
-      heading.current?.focus();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    });
+    setNavigationVersion((version) => version + 1);
   }
 
   function addSelection() {
