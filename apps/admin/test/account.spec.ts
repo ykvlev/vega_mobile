@@ -123,31 +123,28 @@ test('real registration sets a Secure HttpOnly host cookie on loopback, persists
 }) => {
   const account = credentials(1011);
   const directApiCalls: string[] = [];
-  const actionBodies: Array<Promise<{ body: string; failed: boolean }>> = [];
+  const actionBodies: string[] = [];
   page.on('request', (request) => {
     if (new URL(request.url()).port === '3181')
       directApiCalls.push(request.url());
   });
-  page.on('response', (response) => {
-    if (
-      response.request().method() === 'POST' &&
-      new URL(response.url()).pathname === '/account' &&
-      response.headers()['content-type']?.includes('text/x-component')
-    ) {
-      actionBodies.push(
-        response.text().then(
-          (body) => ({ body, failed: false }),
-          () => ({ body: '', failed: true }),
-        ),
-      );
-    }
-  });
+  // Buffer the real server response before handing it to Chromium: a Next
+  // redirect can discard its CDP body before response.text() finishes.
+  // Preserve status, headers and bytes; never replace the application response.
+  await page.route(
+    (url) => url.pathname === '/account',
+    async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      const response = await route.fetch({ maxRedirects: 0 });
+      const body = await response.body();
+      if (response.headers()['content-type']?.includes('text/x-component'))
+        actionBodies.push(body.toString('utf8'));
+      await route.fulfill({ response, body });
+    },
+  );
   await register(page, account);
   const cookie = await session(context);
-  // Finish reading the real action before reload can cancel its response stream.
-  const capturedActions = await Promise.all(actionBodies);
-  expect(capturedActions.length).toBeGreaterThan(0);
-  expect(capturedActions.every((action) => !action.failed)).toBe(true);
+  expect(actionBodies.length).toBeGreaterThan(0);
   const response = await page.reload();
   await expect(
     page.getByRole('heading', { name: 'Ваш аккаунт.', level: 1 }),
@@ -160,12 +157,7 @@ test('real registration sets a Secure HttpOnly host cookie on loopback, persists
   expect(rscResponse.headers()['content-type']).toContain('text/x-component');
   const rsc = await rscResponse.text();
   expect(rsc.includes(account.phone)).toBe(true);
-  for (const serialized of [
-    html,
-    rsc,
-    await page.content(),
-    ...capturedActions.map((action) => action.body),
-  ]) {
+  for (const serialized of [html, rsc, await page.content(), ...actionBodies]) {
     expect(serialized.includes(cookie.value)).toBe(false);
     expect(serialized.includes(account.password)).toBe(false);
     expect(serialized).not.toMatch(
