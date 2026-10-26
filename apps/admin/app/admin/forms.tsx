@@ -93,7 +93,8 @@ export function ProductEditor({
       className={s.editorForm}
       aria-label={product ? 'Редактирование товара' : 'Новый товар'}
       onSubmit={(event) => {
-        if (guard.publicationPending) event.preventDefault();
+        if (guard.publicationPending || guard.mediaPending)
+          event.preventDefault();
         else guard.setSavePending(true);
       }}
     >
@@ -105,7 +106,7 @@ export function ProductEditor({
       )}
       <input type="hidden" name="characteristics" value={characteristics} />
       <fieldset
-        disabled={pending || guard.publicationPending}
+        disabled={pending || guard.publicationPending || guard.mediaPending}
         className={s.formFields}
       >
         <div className={s.formSection}>
@@ -345,7 +346,12 @@ export function PublicationForm({ product }: { product: AdminProduct }) {
       aria-label="Публикация товара"
       className={s.publicationForm}
       onSubmit={(event) => {
-        if (guard.dirty || guard.savePending || guard.publicationPending)
+        if (
+          guard.dirty ||
+          guard.savePending ||
+          guard.publicationPending ||
+          guard.mediaPending
+        )
           event.preventDefault();
         else guard.setPublicationPending(true);
       }}
@@ -364,7 +370,8 @@ export function PublicationForm({ product }: { product: AdminProduct }) {
           pending ||
           guard.publicationPending ||
           guard.dirty ||
-          guard.savePending
+          guard.savePending ||
+          guard.mediaPending
         }
         aria-describedby={guard.dirty ? 'publication-dirty-hint' : undefined}
       >

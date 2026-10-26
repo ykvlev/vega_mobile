@@ -5,6 +5,7 @@ export interface AppConfig {
   readonly databaseSchema: string;
   readonly port: number;
   readonly databaseTimeoutMs: number;
+  readonly publicMediaOrigin: string;
   readonly auth:
     | { readonly enabled: false }
     | { readonly enabled: true; readonly rateLimitSecret: string };
@@ -59,6 +60,24 @@ export function loadConfig(environment: NodeJS.ProcessEnv): AppConfig {
     throw new Error('Invalid demo authentication configuration');
   }
   const authEnabled = environment.AUTH_DEMO_ENABLED === 'true';
+  let publicMediaOrigin: string;
+  try {
+    const origin = new URL(
+      environment.PUBLIC_MEDIA_ORIGIN ?? 'http://127.0.0.1:3001',
+    );
+    if (
+      !['http:', 'https:'].includes(origin.protocol) ||
+      origin.username ||
+      origin.password ||
+      origin.pathname !== '/' ||
+      origin.search ||
+      origin.hash
+    )
+      throw new Error('Invalid origin');
+    publicMediaOrigin = origin.origin;
+  } catch {
+    throw new Error('Invalid public media origin configuration');
+  }
   const rateLimitSecret = environment.AUTH_RATE_LIMIT_SECRET;
   if (authEnabled) {
     const databaseName = decodeURIComponent(url.pathname.slice(1));
@@ -82,6 +101,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv): AppConfig {
     databaseSchema,
     port: integer(environment.PORT, 3001, 0, 65535),
     databaseTimeoutMs: integer(environment.DB_TIMEOUT_MS, 2000, 100, 10000),
+    publicMediaOrigin,
     auth: authEnabled
       ? { enabled: true as const, rateLimitSecret: rateLimitSecret! }
       : { enabled: false as const },

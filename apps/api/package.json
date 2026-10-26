@@ -11,7 +11,7 @@
     "dev": "pnpm build && pnpm start",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
     "test:unit": "pnpm build && node --test test/unit.test.mjs",
-    "test:integration": "pnpm build && node --test --test-concurrency=1 test/integration.test.mjs test/auth-integration.test.mjs test/admin-integration.test.mjs",
+    "test:integration": "pnpm build && node --test --test-concurrency=1 test/integration.test.mjs test/auth-integration.test.mjs test/admin-integration.test.mjs test/media-integration.test.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "demo:seed": "pnpm build && node dist/demo-seed-cli.js",
@@ -23,10 +23,11 @@
     "@nestjs/platform-express": "12.2.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@vega/contracts": "workspace:*",
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
-    "@vega/contracts": "workspace:*"
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

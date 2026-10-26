@@ -31,9 +31,25 @@ model Product {
   version      Int      @default(1)
   createdAt    DateTime @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  images       ProductImage[]
 
   @@index([categoryId, id])
   @@index([isPublished, id])
+}
+
+model ProductImage {
+  id          String   @id @default(uuid()) @db.Uuid
+  productId   String   @db.Uuid
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  data        Bytes
+  contentType String   @default("image/webp")
+  width       Int
+  height      Int
+  sizeBytes   Int
+  position    Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([productId, position])
 }
 
 model User {

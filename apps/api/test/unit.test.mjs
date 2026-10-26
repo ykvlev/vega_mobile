@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { EventEmitter } from 'node:events';
 
 const require = createRequire(import.meta.url);
 const { loadConfig } = require('../dist/config.js');
@@ -20,6 +21,18 @@ const { normalizeSource, tokenDigest } = require('../dist/auth-service.js');
 const { isAuthPath } = require('../dist/auth-errors.js');
 const { validateManagerProvision } = require('../dist/admin-provision.js');
 const { AuthService } = require('../dist/auth-service.js');
+const {
+  ImageWorkQueue,
+  imageFormat,
+  sanitizeImage,
+} = require('../dist/image-transform.js');
+const {
+  ImageUploadGuard,
+  ImageReleaseInterceptor,
+} = require('../dist/image-controller.js');
+const sharp = require('sharp');
+const { lastValueFrom, of, throwError } = require('rxjs');
+const { AuthError } = require('../dist/auth-errors.js');
 const valid = {
   APP_MODE: 'demo',
   COMMERCE_ENABLED: 'false',
@@ -262,4 +275,180 @@ test('manager authorization reads the current database user role and revocation 
     (error) => error.getStatus() === 401,
   );
   assert.equal(reads, 3);
+});
+
+test('fixed media origin rejects credentials, non-HTTP protocols and path/query injection', () => {
+  assert.equal(loadConfig(valid).publicMediaOrigin, 'http://127.0.0.1:3001');
+  assert.equal(
+    loadConfig({ ...valid, PUBLIC_MEDIA_ORIGIN: 'https://media.example.com/' })
+      .publicMediaOrigin,
+    'https://media.example.com',
+  );
+  for (const origin of [
+    'javascript:alert(1)',
+    'https://user:password@example.com/',
+    'https://example.com/path',
+    'https://example.com/?token=secret',
+    'https://example.com/#fragment',
+  ]) {
+    assert.throws(() => loadConfig({ ...valid, PUBLIC_MEDIA_ORIGIN: origin }));
+  }
+});
+
+test('image queue rejects its fourth admission and idempotent releases preserve one active slot', async () => {
+  const queue = new ImageWorkQueue();
+  const first = await queue.acquire();
+  let secondStarted = false;
+  const second = queue.acquire().then((release) => {
+    secondStarted = true;
+    return release;
+  });
+  const third = queue.acquire();
+  await assert.rejects(queue.acquire(), (error) => error.getStatus() === 503);
+  assert.equal(secondStarted, false);
+  first();
+  first();
+  const releaseSecond = await second;
+  assert.equal(secondStarted, true);
+  releaseSecond();
+  const releaseThird = await third;
+  releaseThird();
+  (await queue.acquire())();
+});
+
+test('upload authorization precedes multipart admission and early observable cancellation cannot release an active transform', async () => {
+  let acquired = 0;
+  const request = {
+    rawHeaders: ['Authorization', `Bearer ${'a'.repeat(43)}`],
+    headers: { authorization: `Bearer ${'a'.repeat(43)}` },
+  };
+  const context = { switchToHttp: () => ({ getRequest: () => request }) };
+  const guard = new ImageUploadGuard(
+    {
+      requireEnabled() {},
+      async requireManager() {
+        throw new AuthError(403, 'FORBIDDEN');
+      },
+    },
+    {
+      queue: {
+        async acquire() {
+          acquired += 1;
+          return () => {};
+        },
+      },
+    },
+  );
+  await assert.rejects(
+    guard.canActivate(context),
+    (error) => error.getStatus() === 403,
+  );
+  assert.equal(acquired, 0);
+  let released = 0;
+  request.mediaRelease = () => {
+    released += 1;
+  };
+  request.mediaProcessingStarted = true;
+  const interceptor = new ImageReleaseInterceptor();
+  await lastValueFrom(
+    interceptor.intercept(context, { handle: () => of('complete') }),
+  );
+  assert.equal(released, 0);
+  request.mediaProcessingFinished = true;
+  await lastValueFrom(
+    interceptor.intercept(context, { handle: () => of('complete') }),
+  );
+  assert.equal(released, 1);
+  request.mediaProcessingStarted = false;
+  await assert.rejects(
+    lastValueFrom(
+      interceptor.intercept(context, {
+        handle: () => throwError(() => new Error('Parser failed')),
+      }),
+    ),
+  );
+  assert.equal(released, 2);
+});
+
+test('abort during the second database role check rejects the guard and immediately frees its admission', async () => {
+  const queue = new ImageWorkQueue();
+  let finishRoleCheck;
+  let enteredSecondCheck;
+  const secondCheckEntered = new Promise((resolve) => {
+    enteredSecondCheck = resolve;
+  });
+  const roleCheck = new Promise((resolve) => {
+    finishRoleCheck = resolve;
+  });
+  let checks = 0;
+  const auth = {
+    requireEnabled() {},
+    async requireManager() {
+      checks += 1;
+      if (checks === 2) {
+        enteredSecondCheck();
+        await roleCheck;
+      }
+      return { id: '11111111-1111-4111-8111-111111111111' };
+    },
+  };
+  const response = new EventEmitter();
+  const request = {
+    aborted: false,
+    destroyed: false,
+    res: response,
+    rawHeaders: ['Authorization', `Bearer ${'a'.repeat(43)}`],
+    headers: { authorization: `Bearer ${'a'.repeat(43)}` },
+  };
+  const guard = new ImageUploadGuard(auth, { queue });
+  const pending = guard.canActivate({
+    switchToHttp: () => ({ getRequest: () => request }),
+  });
+  const rejected = assert.rejects(
+    pending,
+    (error) => error.getStatus() === 400,
+  );
+  await secondCheckEntered;
+  request.aborted = true;
+  response.destroyed = true;
+  response.emit('close');
+  // The aborted guard still awaits its DB result, but it must not hold the slot.
+  const admittedAfterAbort = await queue.acquire();
+  finishRoleCheck();
+  await rejected;
+  // Catch/release is idempotent and must not release the next request's slot.
+  const waiting1 = queue.acquire();
+  const waiting2 = queue.acquire();
+  await assert.rejects(queue.acquire(), (error) => error.getStatus() === 503);
+  admittedAfterAbort();
+  (await waiting1)();
+  (await waiting2)();
+});
+
+test('binary magic blocks SVG before decoding and real image normalization removes metadata and bounds geometry', async () => {
+  assert.throws(() =>
+    imageFormat(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>')),
+  );
+  const source = await sharp({
+    create: { width: 3000, height: 1000, channels: 3, background: '#123456' },
+  })
+    .jpeg()
+    .withMetadata({ orientation: 6 })
+    .toBuffer();
+  assert.equal(imageFormat(source), 'jpeg');
+  const clean = await sanitizeImage(source);
+  const metadata = await sharp(clean.data).metadata();
+  assert.equal(metadata.format, 'webp');
+  assert.ok(clean.width <= 2048 && clean.height <= 2048);
+  assert.ok(
+    clean.height > clean.width,
+    'EXIF orientation must be applied before metadata is stripped',
+  );
+  assert.ok(clean.sizeBytes <= 1048576);
+  assert.equal(metadata.exif, undefined);
+  assert.equal(metadata.icc, undefined);
+  await assert.rejects(
+    sanitizeImage(Buffer.from([0xff, 0xd8, 0xff])),
+    (error) => error.getStatus() === 400,
+  );
 });

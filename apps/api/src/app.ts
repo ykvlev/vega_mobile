@@ -4,6 +4,13 @@ import { DatabaseService } from './database';
 import { AuthController, MeController } from './auth-controller';
 import { AuthService } from './auth-service';
 import { AdminController } from './admin-controller';
+import { ImageService } from './image-service';
+import {
+  ImageReleaseInterceptor,
+  ImageUploadGuard,
+  MediaController,
+  ProductImagesController,
+} from './image-controller';
 import {
   HealthController,
   ProductsController,
@@ -16,6 +23,8 @@ export class AppModule {
     return {
       module: AppModule,
       controllers: [
+        ProductImagesController,
+        MediaController,
         AdminController,
         HealthController,
         ProductsController,
@@ -24,6 +33,14 @@ export class AppModule {
         MeController,
       ],
       providers: [
+        ImageUploadGuard,
+        ImageReleaseInterceptor,
+        {
+          provide: ImageService,
+          useFactory: (database: DatabaseService) =>
+            new ImageService(database, config),
+          inject: [DatabaseService],
+        },
         {
           provide: DatabaseService,
           useFactory: () => new DatabaseService(config),
