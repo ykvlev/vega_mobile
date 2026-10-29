@@ -11,10 +11,11 @@
     "dev": "pnpm build && pnpm start",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
     "test:unit": "pnpm build && node --test test/unit.test.mjs",
-    "test:integration": "pnpm build && node --test --test-concurrency=1 test/integration.test.mjs test/auth-integration.test.mjs",
+    "test:integration": "pnpm build && node --test --test-concurrency=1 test/integration.test.mjs test/auth-integration.test.mjs test/admin-integration.test.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "demo:seed": "pnpm build && node dist/demo-seed-cli.js"
+    "demo:seed": "pnpm build && node dist/demo-seed-cli.js",
+    "admin:provision": "pnpm build && node dist/admin-provision-cli.js"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

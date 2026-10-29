@@ -11,7 +11,7 @@ import { AuthCredentialsSchema, EmptyQuerySchema } from '@vega/contracts';
 import { AuthError } from './auth-errors';
 import { AuthService, normalizeSource } from './auth-service';
 
-interface AuthRequest {
+export interface AuthRequest {
   socket: { remoteAddress?: string };
   headers: { authorization?: string };
   rawHeaders: string[];
@@ -22,7 +22,7 @@ function validateQuery(query: unknown): void {
     throw new AuthError(400, 'VALIDATION_FAILED');
 }
 
-function bearer(request: AuthRequest): string {
+export function bearer(request: AuthRequest): string {
   let headers = 0;
   for (let index = 0; index < request.rawHeaders.length; index += 2) {
     if (request.rawHeaders[index]?.toLowerCase() === 'authorization')

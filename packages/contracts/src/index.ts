@@ -85,7 +85,7 @@ export const AuthCredentialsSchema = z.strictObject({
 export const AuthUserSchema = z.strictObject({
   id: z.uuid(),
   phone: z.string().regex(/^\+7[0-9]{10}$/),
-  role: z.literal('customer'),
+  role: z.enum(['customer', 'manager']),
   phoneVerified: z.literal(false),
 });
 export const AuthResponseSchema = z.strictObject({
@@ -98,6 +98,97 @@ export const AuthResponseSchema = z.strictObject({
 export const AuthMeResponseSchema = z.strictObject({ user: AuthUserSchema });
 export type AuthCredentials = z.infer<typeof AuthCredentialsSchema>;
 export type AuthUser = z.infer<typeof AuthUserSchema>;
+
+const CatalogText = (maximum: number) =>
+  z
+    .string()
+    .max(maximum)
+    .refine((value) => !value.includes('\0'));
+const CatalogName = CatalogText(160).trim().min(1);
+const EditableMillimeters = z
+  .string()
+  .regex(/^[1-9][0-9]{0,9}$/)
+  .refine(
+    (value) =>
+      Number.isSafeInteger(Number(value)) && Number(value) <= 2147483647,
+  );
+const PublicCharacteristicKey = z
+  .string()
+  .min(1)
+  .max(64)
+  .refine(
+    (key) =>
+      key.trim().length > 0 &&
+      !key.includes('\0') &&
+      ![
+        '__proto__',
+        'constructor',
+        'prototype',
+        'price',
+        'stock',
+        'availability',
+        'metadata',
+      ].includes(key.toLowerCase()),
+  );
+export const EditableCharacteristicsSchema = z
+  .preprocess(
+    (value) => {
+      // z.record deliberately skips __proto__; reject rather than silently accept it.
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        Object.hasOwn(value, '__proto__')
+      )
+        return null;
+      return value;
+    },
+    z.record(PublicCharacteristicKey, CatalogText(256)),
+  )
+  .refine((value) => Object.keys(value).length <= 20);
+export const AdminCategoryCreateSchema = z.strictObject({
+  name: CatalogName,
+  slug: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+});
+const ProductWriteFields = {
+  article: CatalogText(64).trim().min(1),
+  name: CatalogName,
+  description: CatalogText(4000),
+  categoryId: z.uuid(),
+  rollLengthMm: EditableMillimeters,
+  widthMm: EditableMillimeters,
+  characteristics: EditableCharacteristicsSchema,
+  isPublished: z.boolean(),
+};
+export const AdminProductCreateSchema = z.strictObject({
+  ...ProductWriteFields,
+  description: ProductWriteFields.description.default(''),
+  characteristics: ProductWriteFields.characteristics.default({}),
+  isPublished: ProductWriteFields.isPublished.default(false),
+});
+export const AdminProductPatchSchema = z
+  .strictObject(ProductWriteFields)
+  .partial()
+  .extend({ version: z.number().int().min(1).max(2147483646) })
+  .refine((value) => Object.keys(value).some((key) => key !== 'version'));
+export const AdminProductListQuerySchema = ProductListQuerySchema.extend({
+  status: z.enum(['published', 'draft']).optional(),
+});
+export const AdminProductSchema = PublicProductSchema.extend({
+  isPublished: z.boolean(),
+  version: z.number().int().positive(),
+});
+export const AdminProductListSchema = z.strictObject({
+  items: z.array(AdminProductSchema),
+  nextCursor: z.uuid().nullable(),
+});
+export const AdminCategoryListSchema = PublicCategoryListSchema;
+export type AdminProduct = z.infer<typeof AdminProductSchema>;
+export type AdminProductCreate = z.infer<typeof AdminProductCreateSchema>;
+export type AdminProductPatch = z.infer<typeof AdminProductPatchSchema>;
 
 // Explicit allowlist: even a future ORM model with commercial fields stays private.
 export function toPublicProduct(source: unknown): PublicProduct {

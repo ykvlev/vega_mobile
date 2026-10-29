@@ -28,7 +28,9 @@
     "test:design": "playwright test --config apps/admin/test/playwright.config.ts",
     "test:catalog": "dotenv -e .env -- playwright test --config apps/admin/test/catalog-lab.config.ts",
     "demo:catalog:seed": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api demo:seed",
-    "test:account": "dotenv -e .env -- playwright test --config apps/admin/test/account.config.ts"
+    "test:account": "dotenv -e .env -- playwright test --config apps/admin/test/account.config.ts",
+    "test:admin": "dotenv -e .env -- playwright test --config apps/admin/test/admin.config.ts",
+    "demo:admin:provision": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api admin:provision"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

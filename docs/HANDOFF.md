@@ -120,3 +120,31 @@ quality сохраняет обязательный полный audit и ожи
 переносить локальный PASS на удалённый CI до его завершения. Публичного deploy нет.
 Для продолжения: проверить git status/PRchecks, изучить визуальные артефакты,
 собирать обратную связь по дизайну. Не merge/release, пока quality BLOCKED.
+
+## Текущий срез: desktop admin (25 октября 2026)
+
+Родитель account UI принят локальными browser7/7 и удалённым run40216578957:
+account-ui/catalog-lab/design-preview прошли, quality остановился только на
+node-forge audit. Исходники account опубликованы draft PR6, head77e2481.
+
+Текущая ветка feat/desktop-admin: новая manager-роль, guarded offline provisioning,
+admin categories/products API, черновик/публикация, CAS-версия и transactional
+CatalogAudit; десктопная Next-админка в общей теме VEGA. Реальная 1С, цены,
+остатки, оплата и production пока не подключены. Фотозагрузка не входит в срез.
+
+Root проверил25 unit/tooling и27 PostgreSQLintegration checks, все прошли.
+UI-граничные случаи категории101 и публикации при несохранённом редакторе
+исправлены и подтверждены browser7/7 без пропусков. После паузы root исправил
+доступные названия select/button; тест validation теперь проверяет актуальное
+сообщение и отсутствие как товара, так и audit-события. Итоговый полный прогон7/7
+прошёл; screenshot-сценарий дополнительно переснят с scrollY=0 (1/1PASS).
+Регрессии account/design/catalog ранее прошли по7/7 на этом серверном срезе.
+Actual desktop screenshots сохранены в docs/media/admin-*.png. Порты fixtures
+API3193 и Next3104 (старый чужой Next3191 не трогали). До завершения remote CI
+не переносить локальный PASS на GitHub. Далее commit/secret scan/push/draftPR.
+
+Черновик start_skill облачной среды обновлён и сохранён в текущем чате:
+новый root redirect/admin, guarded staff access, реальные test-команды.
+Publication metadata status=saved, requires_publish=true — это НЕ публикация.
+Публикацию выполняет пользователь через продукт; не создавать фиктивные ссылки.
+Установка и network/repositories настройки сохранены без изменения.

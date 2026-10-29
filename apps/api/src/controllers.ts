@@ -60,7 +60,7 @@ export function escapeLikeLiteral(value: string): string {
   return value.replace(/[\\%_]/g, (character) => `\\${character}`);
 }
 
-const publicProductSelect = {
+export const publicProductSelect = {
   id: true,
   skuId: true,
   article: true,
@@ -69,9 +69,10 @@ const publicProductSelect = {
   categoryId: true,
   rollLengthMm: true,
   widthMm: true,
+  characteristics: true,
 } as const;
 
-type ProductRow = {
+export type ProductRow = {
   id: string;
   skuId: string;
   article: string;
@@ -80,9 +81,10 @@ type ProductRow = {
   categoryId: string;
   rollLengthMm: number;
   widthMm: number;
+  characteristics: unknown;
 };
 
-function publicProduct(row: ProductRow) {
+export function publicProduct(row: ProductRow) {
   return toPublicProduct({
     id: row.id,
     skuId: row.skuId,
@@ -91,7 +93,7 @@ function publicProduct(row: ProductRow) {
     description: row.description ?? '',
     categoryId: row.categoryId,
     media: [],
-    characteristics: {},
+    characteristics: row.characteristics,
     rollLengthMm: String(row.rollLengthMm),
     widthMm: String(row.widthMm),
   });
@@ -138,6 +140,7 @@ export class ProductsController {
       const rows = await this.database.prisma.product.findMany({
         select: publicProductSelect,
         where: {
+          isPublished: true,
           ...(cursor ? { id: { gt: cursor } } : {}),
           ...(categoryId ? { categoryId } : {}),
           ...(escaped === undefined
@@ -175,7 +178,7 @@ export class ProductsController {
     let row;
     try {
       row = await this.database.prisma.product.findUnique({
-        where: { id: parsed.data.id },
+        where: { id: parsed.data.id, isPublished: true },
         select: publicProductSelect,
       });
     } catch {

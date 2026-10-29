@@ -15,6 +15,10 @@ const messages: Record<string, string> = {
   KDF_BUSY: 'Authentication busy',
   NOT_FOUND: 'Not found',
   PAYLOAD_TOO_LARGE: 'Request too large',
+  FORBIDDEN: 'Access denied',
+  VERSION_CONFLICT: 'Product changed; reload before saving',
+  CONFLICT: 'Catalog identity conflict',
+  ADMIN_UNAVAILABLE: 'Catalog management unavailable',
 };
 
 export class AuthError extends HttpException {
@@ -35,7 +39,16 @@ export function isAuthPath(url: string): boolean {
   return (
     path === '/api/v1/me' ||
     path === '/api/v1/auth' ||
-    path?.startsWith('/api/v1/auth/') === true
+    path?.startsWith('/api/v1/auth/') === true ||
+    path === '/api/v1/admin' ||
+    path?.startsWith('/api/v1/admin/') === true
+  );
+}
+
+export function isAdminPath(url: string): boolean {
+  const path = url.split('?')[0]?.toLowerCase().replace(/\/+$/, '');
+  return (
+    path === '/api/v1/admin' || path?.startsWith('/api/v1/admin/') === true
   );
 }
 

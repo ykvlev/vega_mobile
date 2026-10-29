@@ -203,6 +203,12 @@ export class AuthService {
     }
   }
 
+  async requireManager(token: string) {
+    const session = await this.findSession(token, false);
+    if (session.user.role !== 'manager') throw new AuthError(403, 'FORBIDDEN');
+    return AuthUserSchema.parse(session.user);
+  }
+
   async me(token: string) {
     const session = await this.findSession(token, false);
     return { user: AuthUserSchema.parse(session.user) };

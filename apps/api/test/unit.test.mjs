@@ -18,6 +18,8 @@ const {
 } = require('../dist/auth-password.js');
 const { normalizeSource, tokenDigest } = require('../dist/auth-service.js');
 const { isAuthPath } = require('../dist/auth-errors.js');
+const { validateManagerProvision } = require('../dist/admin-provision.js');
+const { AuthService } = require('../dist/auth-service.js');
 const valid = {
   APP_MODE: 'demo',
   COMMERCE_ENABLED: 'false',
@@ -186,4 +188,78 @@ test('actual scrypt uses fixed memory parameters, random salt and constant-lengt
     await hasher.verify(password, 'invalid-encoded-password-hash'),
     false,
   );
+});
+
+test('offline staff provisioning requires enabled isolated demo auth and valid environment credentials', () => {
+  const environment = {
+    ...valid,
+    AUTH_DEMO_ENABLED: 'true',
+    AUTH_RATE_LIMIT_SECRET: 'x'.repeat(32),
+    ADMIN_PHONE: '8 (999) 123-45-67',
+    ADMIN_PASSWORD: 'Demo password for a staff account',
+  };
+  assert.equal(
+    validateManagerProvision(environment).credentials.phone,
+    '+79991234567',
+  );
+  for (const patch of [
+    { AUTH_DEMO_ENABLED: 'false' },
+    { ADMIN_PHONE: undefined },
+    { ADMIN_PASSWORD: undefined },
+    { ADMIN_PASSWORD: 'short' },
+    { DATABASE_URL: 'postgresql://localhost/vega' },
+  ])
+    assert.throws(() => validateManagerProvision({ ...environment, ...patch }));
+  assert.equal(isAuthPath('/API/V1/ADMIN/products'), true);
+});
+
+test('manager authorization reads the current database user role and revocation on every request', async () => {
+  let role = 'manager';
+  let revokedAt = null;
+  let reads = 0;
+  const service = new AuthService(
+    {
+      prisma: {
+        async $queryRaw() {
+          return [{ now: new Date() }];
+        },
+        authSession: {
+          async findUnique() {
+            reads += 1;
+            return {
+              expiresAt: new Date(Date.now() + 60000),
+              revokedAt,
+              user: {
+                id: '11111111-1111-4111-8111-111111111111',
+                phone: '+79991234567',
+                role,
+                phoneVerified: false,
+              },
+            };
+          },
+        },
+      },
+    },
+    loadConfig({
+      ...valid,
+      AUTH_DEMO_ENABLED: 'true',
+      AUTH_RATE_LIMIT_SECRET: 'x'.repeat(32),
+    }),
+  );
+  assert.equal(
+    (await service.requireManager('demo-test-token')).role,
+    'manager',
+  );
+  role = 'customer';
+  await assert.rejects(
+    service.requireManager('demo-test-token'),
+    (error) => error.getStatus() === 403,
+  );
+  role = 'manager';
+  revokedAt = new Date();
+  await assert.rejects(
+    service.requireManager('demo-test-token'),
+    (error) => error.getStatus() === 401,
+  );
+  assert.equal(reads, 3);
 });
