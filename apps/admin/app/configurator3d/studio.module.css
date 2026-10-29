@@ -1,0 +1,361 @@
+.page {
+  min-height: 100dvh;
+  background: #fff;
+  color: #161616;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.header {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 44px;
+  border-bottom: 1px solid #dededb;
+}
+.brand {
+  font-size: 32px;
+  letter-spacing: -2px;
+  text-decoration: none;
+  color: inherit;
+}
+.headerLabel,
+.catalogLink {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: inherit;
+}
+.catalogLink {
+  text-decoration: none;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
+  min-height: min(760px, calc(100dvh - 140px));
+}
+.sceneSection {
+  min-width: 0;
+  background: #eeefed;
+  display: flex;
+  flex-direction: column;
+}
+.sceneHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 30px 32px 0;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+.scene {
+  min-width: 0;
+  position: relative;
+  height: clamp(320px, 57vw, 590px);
+  flex: 1;
+}
+.canvasHost {
+  position: absolute;
+  inset: 0;
+}
+.canvasHost canvas {
+  display: block;
+  max-width: 100%;
+  touch-action: none;
+}
+.canvasHost canvas:focus-visible {
+  outline: 2px solid #1b1b1b;
+  outline-offset: -4px;
+}
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: #eeefed;
+}
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #b0b3b0;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.fallback {
+  position: absolute;
+  inset: 0;
+  background: #111;
+}
+.fallbackImage {
+  object-fit: cover;
+}
+.fallbackMessage {
+  position: absolute;
+  inset: auto 20px 20px;
+  padding: 16px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.fallbackMessage p {
+  margin: 0 0 12px;
+}
+.fallbackMessage button {
+  min-height: 44px;
+  padding: 10px 15px;
+  background: #111;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.viewBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 20px;
+}
+.viewBar button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 12px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.viewBar button:hover {
+  background: #e1e2de;
+}
+.sceneFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 16px;
+  padding: 18px 32px;
+  border-top: 1px solid #d5d7d2;
+  color: #5b605a;
+  font-size: 11px;
+}
+.sceneFooter button {
+  border: 0;
+  background: transparent;
+  color: #292b29;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.options {
+  padding: 45px clamp(24px, 3.4vw, 60px);
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  margin: 0 0 26px;
+}
+.options h1 {
+  font-size: clamp(30px, 3vw, 48px);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  margin: 0 0 22px;
+}
+.intro {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.75;
+  margin-bottom: 30px;
+}
+.fieldset {
+  border: 0;
+  padding: 22px 0;
+  margin: 0;
+  border-top: 1px solid #ddd;
+  min-width: 0;
+}
+.fieldset legend {
+  font-size: 12px;
+  width: 100%;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+}
+.fieldset legend span {
+  color: #666;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 15px;
+}
+.swatch {
+  border: none;
+  padding: 0;
+  background: transparent;
+  min-height: 64px;
+  color: #555;
+  font-size: 9px;
+  cursor: pointer;
+  min-width: 0;
+}
+.swatch span:first-child {
+  display: block;
+  height: 38px;
+  width: 100%;
+  margin-bottom: 9px;
+  border: 1px solid #00000016;
+}
+.swatch[aria-pressed='true'] span:first-child {
+  outline: 1px solid #222;
+  outline-offset: 3px;
+}
+.finishes {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+}
+.finishes button {
+  flex: 1;
+  padding: 12px 4px;
+  min-height: 44px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+.finishes button[aria-pressed='true'] {
+  color: #fff;
+  background: #171717;
+  border-color: #171717;
+}
+.selection {
+  margin: 4px 0 18px;
+  font-size: 12px;
+}
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  background: #141414;
+  color: #fff;
+  text-decoration: none;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  min-height: 54px;
+}
+.primary span {
+  font-size: 18px;
+}
+.notice {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.7;
+  margin: 16px 0 0;
+}
+.attribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 20px 32px;
+  font-size: 10px;
+  line-height: 1.6;
+  border-top: 1px solid #ddd;
+  color: #666;
+}
+.attribution a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+.page button:focus-visible,
+.page a:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 3px;
+}
+.page button:disabled,
+.fieldset:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+@media (max-width: 760px) {
+  .header {
+    height: 64px;
+    padding: 0 20px;
+  }
+  .headerLabel {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+  .brand {
+    font-size: 27px;
+  }
+  .catalogLink {
+    font-size: 10px;
+  }
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sceneHeader {
+    padding: 22px 20px 0;
+    font-size: 9px;
+  }
+  .scene {
+    flex: none;
+    height: min(50dvh, 430px);
+    min-height: 300px;
+  }
+  .sceneFooter {
+    padding: 10px 20px;
+  }
+  .sceneFooter > span {
+    flex-basis: 100%;
+  }
+  .options {
+    padding: 30px 24px;
+  }
+  .options h1 {
+    font-size: 37px;
+  }
+  .eyebrow {
+    margin-bottom: 20px;
+  }
+  .intro {
+    margin-bottom: 22px;
+  }
+  .swatches {
+    gap: 12px;
+  }
+  .swatch {
+    font-size: 9px;
+  }
+  .attribution {
+    padding: 20px 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+.catalogLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.attribution a svg {
+  vertical-align: middle;
+}

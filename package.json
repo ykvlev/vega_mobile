@@ -33,7 +33,10 @@
     "demo:admin:provision": "pnpm build:contracts && dotenv -e .env -- pnpm --filter @vega/api admin:provision",
     "test:media": "dotenv -e .env -- playwright test --config apps/admin/test/media.config.ts",
     "test:mobile": "dotenv -e .env -- playwright test --config apps/mobile/test/mobile.config.ts",
-    "check:mobile:native": "node scripts/mobile-native-check.mjs"
+    "check:mobile:native": "node scripts/mobile-native-check.mjs",
+    "test:3d": "pnpm check:3d && playwright test --config apps/admin/test/configurator3d.config.ts",
+    "assets:3d": "node apps/admin/scripts/prepare-car.mjs",
+    "check:3d": "node apps/admin/scripts/check-car.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

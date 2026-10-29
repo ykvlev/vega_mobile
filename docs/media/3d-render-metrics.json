@@ -1,0 +1,9 @@
+{
+  "renderer": "Chromium WebGL / SwiftShader",
+  "devicePerformanceValidated": false,
+  "triangles": 107643,
+  "calls": 25,
+  "firstInteractiveMs": 8565,
+  "groundClearance": 0.015000000000000013,
+  "fixedMaterials": ":0a0a0a:000000:0.8:0|Brake:d30000:000000:0.2:1|Brakelight:040404:da0000:0.5:0|Dashboard:040404:ff8b00:0.5:0|Disc:ffffff:000000:0.73:1|Floormat:040404:000000:0.5:0|Glass:6f858b:000000:0.1:0|Hardware:8e8e8e:000000:0.5:1|Headlight:040404:c2dfff:0.5:0|Interior 1:0c0c0c:000000:0.4:0|Interior 2:0c0c0c:000000:0.4:0|Interior 3 Carmine:801000:000000:0.4:0|Mechanical:404040:000000:1:1|Mirror:ffffff:000000:0:1|Panel Sides:0c0c0c:000000:0.4:0|Rim1:777d82:000000:0.3:0|Rim2:777d82:000000:0.3:1|Signallight:040404:e7a000:0.5:0|Tireside:2c2c2c:000000:0.85:0|Tiretread:181818:000000:0.6:0"
+}
