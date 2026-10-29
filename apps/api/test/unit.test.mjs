@@ -247,6 +247,7 @@ test('manager authorization reads the current database user role and revocation 
                 phone: '+79991234567',
                 role,
                 phoneVerified: false,
+                commercialAccessStatus: 'pending',
               },
             };
           },

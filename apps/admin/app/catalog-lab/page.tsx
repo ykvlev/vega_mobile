@@ -54,7 +54,7 @@ function Frame({ children }: { children: ReactNode }) {
             VEGA<span> / LAB</span>
           </span>
           <Link className={s.exit} href="/">
-            Рабочее пространство <ArrowOut />
+            К приложению <ArrowOut />
           </Link>
         </header>
         <main id="main">

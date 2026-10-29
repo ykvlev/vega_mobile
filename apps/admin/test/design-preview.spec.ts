@@ -4,7 +4,8 @@ const prototypeBadge = 'Дизайн-прототип · демонстраци�
 const firstProduct = 'VEGA Color · Graphite';
 
 async function openPreview(page: Page) {
-  const response = await page.goto('/design-preview');
+  const response = await page.goto('/');
+  await expect(page).toHaveURL(/\/design-preview$/);
   expect(response?.status()).toBe(200);
   await expect(page.getByText(prototypeBadge, { exact: true })).toBeVisible();
   const hero = page.getByRole('img', {
@@ -116,7 +117,15 @@ test('local selection preserves meters and rolls of the same film without commer
     .getByRole('button', { name: `Открыть ${firstProduct}`, exact: true })
     .click();
   await page.getByRole('button', { name: 'Метры', exact: true }).click();
-  await page.getByRole('spinbutton', { name: 'Количество метров' }).fill('5');
+  const lengths = page.getByRole('group', {
+    name: 'Длина отреза',
+    exact: true,
+  });
+  await expect(lengths.getByRole('button')).toHaveCount(18);
+  await lengths.getByRole('button', { name: '5 м', exact: true }).click();
+  await expect(
+    lengths.getByRole('button', { name: '5 м', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
   await page
     .getByRole('button', { name: 'Добавить в подбор', exact: true })
     .click();
@@ -229,7 +238,7 @@ test('keyboard profile link opens the connected account screen', async ({
 
 test('320 px viewport remains within the screen across the main flow', async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 320, height: 740 });
   await openPreview(page);
   await expectNoOverflow(page);
@@ -239,6 +248,10 @@ test('320 px viewport remains within the screen across the main flow', async ({
     .getByRole('button', { name: `Открыть ${firstProduct}`, exact: true })
     .click();
   await expectNoOverflow(page);
+  await page.screenshot({
+    path: testInfo.outputPath('meter-options-320.png'),
+    fullPage: true,
+  });
   await page
     .getByRole('button', { name: 'Добавить в подбор', exact: true })
     .click();

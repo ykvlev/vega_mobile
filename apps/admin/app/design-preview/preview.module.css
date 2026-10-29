@@ -1292,3 +1292,31 @@
     transition: none;
   }
 }
+
+.meterChoices {
+  border: 0;
+  margin: 0 0 18px;
+  padding: 0;
+  min-width: 0;
+}
+.meterChoices legend {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.meterChoices > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+  gap: 8px;
+}
+.meterChoices button {
+  min-height: 44px;
+  border: 1px solid #4b4b50;
+  border-radius: 12px;
+  background: #242426;
+  color: #fff;
+  font-size: 12px;
+}
+.meterChoices button[aria-pressed='true'] {
+  background: #f4f4f1;
+  color: #101010;
+}

@@ -82,6 +82,9 @@ async function register(page: Page, account: ReturnType<typeof credentials>) {
   ).toBeVisible();
   await expect(page.getByText(account.phone, { exact: true })).toBeVisible();
   await expect(
+    page.getByText('Ожидает одобрения менеджером', { exact: true }),
+  ).toBeVisible();
+  await expect(
     page.getByText('Телефон не подтверждён', { exact: true }),
   ).toBeVisible();
   return action;

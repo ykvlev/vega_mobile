@@ -200,7 +200,7 @@ function Shell({
         </main>
         <footer className={s.footer}>
           VEGA / Управление каталогом
-          <span>Тестовая среда · без реальных продаж</span>
+          <span>Архивный демо-стенд · сотрудники работают в 1С</span>
         </footer>
       </div>
     </div>
