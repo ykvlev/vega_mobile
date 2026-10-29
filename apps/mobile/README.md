@@ -1,20 +1,21 @@
-# VEGA mobile: bootstrap
+# VEGA mobile
 
-Стартовый Expo Router экран этапа 1, без реализованных торговых функций.
+React Native/Expo клиент в стиле LIMÉ: главная, API-каталог, карточка, локальный
+подбор и телефон/пароль с ожиданием одобрения менеджером. Native-сессия использует
+SecureStore, публичный подбор — AsyncStorage; web-export хранит bearer только
+в памяти. Реальные 1С, цены/наличие, заказ, платежи и SMS ещё не подключены.
 
-Из корня репозитория после установки общего workspace:
+Из корня workspace:
 
 ```sh
+pnpm build:contracts
 pnpm --filter @vega/mobile typecheck
-pnpm --filter @vega/mobile build
-pnpm --filter @vega/mobile start
+pnpm build:mobile
+pnpm dev:mobile
 ```
 
-`build` выполняет web export через Metro и проверяет bundling. Это не сборка
-Android/iOS и не проверка native release. Для устройств потребуется совместимый
-development build; Expo Go не заменяет приёмку подписанной сборки.
-
-React 19.3.0, React Native 0.88.0 и native peer versions выбраны по
-`bundledNativeModules.json` пакета Expo 58.0.17. Не обновлять их независимо.
-Идентификаторы приложений, EAS и signing ещё не настроены; схема `vega-dev`
-используется только для разработки.
+Указать доступный устройству EXPO_PUBLIC_API_URL. На телефоне localhost не означает
+компьютер. Нужны настроенный demo API и соответствующий Expo58 development client.
+Инструкции, ограничения и проверка: [MOBILE-CUSTOMER.md](../../docs/MOBILE-CUSTOMER.md).
+`build:mobile` проверяет web-export, не создаёт APK/IPA. Native/device validation
+и подпись пока не выполнены. Не передавать секреты через EXPO_PUBLIC переменные.

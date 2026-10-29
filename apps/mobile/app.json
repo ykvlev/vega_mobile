@@ -5,8 +5,8 @@
     "version": "0.0.0",
     "scheme": "vega-dev",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "plugins": ["expo-router"],
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router", "expo-secure-store"],
     "web": {
       "bundler": "metro",
       "output": "static"
