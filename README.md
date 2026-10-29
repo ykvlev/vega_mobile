@@ -100,6 +100,34 @@ x86_64 и существующего Git HEAD, скачивает закрепл
 
 Начать с `docs/HANDOFF.md`, `docs/DECISIONS.md` и `docs/ROADMAP.md`.
 
+## Независимый дизайн-прототип
+
+На ветке `feat/stage-2-design-preview` добавлен путь `/design-preview` в web-приложении
+admin. Он не заменяет главную админки и не подключён к API: демонстрационные товары,
+поиск, категории, карточка, локальный подбор и диалог без настоящего входа.
+Цен/остатков нет даже в fixtures, заказы и платежи не создаются. Автомобильный hero —
+оригинальная AI-концепция, не фотография реального товара или гарантия цвета.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build:admin
+pnpm exec playwright install chromium
+pnpm test:design
+```
+
+Playwright сам запускает production-сервер на свободном порту 3100 и останавливает
+только его после проверок. `DESIGN_PREVIEW_BASE_URL` позволяет проверить отдельно
+запущенный сервер. В текущем cloud Chromium уже установлен: вместо загрузки
+используется `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`.
+Скриншоты/trace сохраняются в игнорируемый `test-results/design-preview`; в CI
+это artifact `design-preview-browser-results`. Job `design-preview` проверяет
+только независимый визуальный прототип, а общий `quality` продолжает блокироваться
+на node-forge. Никакой автоматической публикации или обхода gate нет.
+
+Команды build явно задают `NODE_ENV=production`, dev — `development`, чтобы
+локальный `.env` API не ломал сборку Next/Expo. Тестовый подбор сбрасывается при
+перезагрузке страницы; сохранение аккаунта и корзины рабочего магазина не реализовано.
+
 Для исправления GHSA-mrhx-c7xc-m3w5 задан scoped override Expo CLI на Zod 4.6.7.
 `pnpm test:tooling` проверяет фактическую зависимость CLI, его схемы и security
 regression; команда включена в обязательный `test:unit`. Это проверенная

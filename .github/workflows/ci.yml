@@ -68,3 +68,41 @@ jobs:
         run: pnpm build
       - name: Audit all workspace dependencies
         run: pnpm audit --audit-level high
+
+  design-preview:
+    name: design-preview
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Independent visual checks only. The quality job remains mandatory and fails
+    # on the unresolved forge advisory; this job is not a release approval.
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.19.0
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@10.34.8
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium for browser checks
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Reproduce local development environment fixture
+        run: |
+          test ! -e .env
+          cp .env.example .env
+      - name: Build independent web prototype
+        run: pnpm build:admin
+      - name: Check prototype interactions and responsive layouts
+        run: pnpm test:design
+      - name: Save browser screenshots and failure traces
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: design-preview-browser-results
+          path: test-results/design-preview
+          if-no-files-found: warn
+          retention-days: 7

@@ -89,3 +89,34 @@ scripts, CI full audit вместо --prod. Установка frozen, unit4+too
 ForgePR1152/1158 не merged; version1.4.1-0 в upstreammain не устраняет конкретный
 defect. Не ставить его ради зелёного audit. Не начинать этап2 без закрытия gate.
 Cloud start_skill обновлён: один blocker и полный audit; сохранение не публикация.
+
+## Независимая дизайн-ветка после разрешения пользователя
+
+Пользователь разрешил параллельную визуальную работу при Stage1BLOCKED.
+Текущая ветка feat/stage-2-design-preview, base feat/stage-1-bootstrap.
+Общий environment-only fix d8023f50088bbc0f1ac60d1c8f939cbfd988a9bd выделен
+отдельным коммитом и fast-forward перенесён в обе ветки (без force push):
+build явно NODE_ENVproduction, dev development. Это устраняет ошибку Next
+при наличии API.env с NODE_ENVdevelopment.
+
+Добавлены @vega/design-tokens, webroute /design-preview, AIhero asset,
+интерактивные home/catalog/detail/local selection/profile/dialog/2Dcolorstudio.
+Admin homepage и native app не заменены. Fixtures гостевые: вообще нет цен
+или остатков, не запрашиваются credentials, нет API/order/payment запросов.
+Размеры perSKU, Clear15м против Graphite17м; keyboard remove переносит фокус
+и объявляет удаление. Семь Playwright тестов прошли локально и независимо,
+полный root lint/types/format и productionadminbuild PASS.
+Скриншоты в /workspace/reference-research/stage2/playwright и independent.
+
+Документы: STAGE-2-PREVIEW.md, STAGE-2-DESIGN.md, STAGE-2-QA.md.
+PASS только перечисленных браузерных сценариев, не всего этапа2/native/commerce.
+QA-agent финальный turn однажды упёрся в usage limit; вместо выдуманного отчёта
+независимый критик выполнил все7 проверок после исправлений и сохранил отчёт.
+Root усилил проверку успешной загрузки hero и повторил7/7.
+
+CI дополнен отдельным job design-preview с browser screenshot artifacts;
+quality сохраняет обязательный полный audit и ожидаемо FAIL по node-forge.
+Новый UI/source commit и run должны быть проверены по актуальной ветке/PR: не
+переносить локальный PASS на удалённый CI до его завершения. Публичного deploy нет.
+Для продолжения: проверить git status/PRchecks, изучить визуальные артефакты,
+собирать обратную связь по дизайну. Не merge/release, пока quality BLOCKED.
