@@ -10,6 +10,14 @@
 
 Референс LIMÉ, автомобильная главная, белые экраны, каталог, карточка, подбор, вход и профиль на React Native.
 
+Подготовка к устройствам: [PR №13](https://github.com/ykvlev/vega_mobile/pull/13),
+[ветка feat/mobile-device-preparation](https://github.com/ykvlev/vega_mobile/tree/feat/mobile-device-preparation).
+Добавлены native prebuild обеих платформ, настройки тестовых EAS-сборок,
+исправление светлой Android-темы и защита конфигурации endpoint.
+[Инструкция Windows и матрица приёмки](https://github.com/ykvlev/vega_mobile/blob/feat/mobile-device-preparation/docs/MOBILE-DEVICE-ACCEPTANCE.md).
+Локально прошли 60 unit/tooling, 3 E2E и компиляция JavaScript обеих платформ;
+физические устройства и облачные APK/IPA ещё не проверены.
+
 ## Что осталось
 
 Принять брендбук, заменить демонстрационные материалы, проверить приложение на iPhone/Android, клавиатуру, доступность и background.
