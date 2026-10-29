@@ -288,5 +288,8 @@ for (const viewport of [
       path: testInfo.outputPath('catalog.png'),
       fullPage: true,
     });
+    await page.screenshot({
+      path: testInfo.outputPath('catalog-viewport.png'),
+    });
   });
 }
