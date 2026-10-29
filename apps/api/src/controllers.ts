@@ -2,10 +2,20 @@ import {
   Controller,
   Get,
   Query,
+  Param,
+  NotFoundException,
   ServiceUnavailableException,
   BadRequestException,
 } from '@nestjs/common';
-import { toPublicProduct } from '@vega/contracts';
+import {
+  toPublicProduct,
+  ProductListQuerySchema,
+  CategoryListQuerySchema,
+  ProductIdParamsSchema,
+  EmptyQuerySchema,
+  PublicProductListSchema,
+  PublicCategoryListSchema,
+} from '@vega/contracts';
 import { DatabaseService } from './database';
 
 @Controller('health')
@@ -33,74 +43,152 @@ export class HealthController {
   }
 }
 
-@Controller('api/v1/products')
-export class ProductsController {
+function invalidQuery(): BadRequestException {
+  return new BadRequestException({
+    error: { code: 'VALIDATION_FAILED', message: 'Invalid catalog parameters' },
+  });
+}
+
+function unavailable(): ServiceUnavailableException {
+  return new ServiceUnavailableException({
+    error: { code: 'CATALOG_UNAVAILABLE', message: 'Catalog unavailable' },
+  });
+}
+
+// Prisma contains uses PostgreSQL LIKE patterns: escape user wildcard characters.
+export function escapeLikeLiteral(value: string): string {
+  return value.replace(/[\\%_]/g, (character) => `\\${character}`);
+}
+
+const publicProductSelect = {
+  id: true,
+  skuId: true,
+  article: true,
+  name: true,
+  description: true,
+  categoryId: true,
+  rollLengthMm: true,
+  widthMm: true,
+} as const;
+
+type ProductRow = {
+  id: string;
+  skuId: string;
+  article: string;
+  name: string;
+  description: string | null;
+  categoryId: string;
+  rollLengthMm: number;
+  widthMm: number;
+};
+
+function publicProduct(row: ProductRow) {
+  return toPublicProduct({
+    id: row.id,
+    skuId: row.skuId,
+    article: row.article,
+    name: row.name,
+    description: row.description ?? '',
+    categoryId: row.categoryId,
+    media: [],
+    characteristics: {},
+    rollLengthMm: String(row.rollLengthMm),
+    widthMm: String(row.widthMm),
+  });
+}
+
+@Controller('api/v1/categories')
+export class CategoriesController {
   constructor(private readonly database: DatabaseService) {}
 
   @Get()
-  async list(
-    @Query('limit') rawLimit?: string,
-    @Query('cursor') cursor?: string,
-  ) {
-    const limit = rawLimit === undefined ? 20 : Number(rawLimit);
-    if (
-      (rawLimit !== undefined && !/^\d+$/.test(rawLimit)) ||
-      !Number.isInteger(limit) ||
-      limit < 1 ||
-      limit > 100
-    ) {
-      throw new BadRequestException({
-        error: { code: 'VALIDATION_FAILED', message: 'Invalid page limit' },
-      });
-    }
-    if (
-      cursor !== undefined &&
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        cursor,
-      )
-    ) {
-      throw new BadRequestException({
-        error: { code: 'VALIDATION_FAILED', message: 'Invalid cursor' },
-      });
-    }
+  async list(@Query() query: unknown) {
+    const parsed = CategoryListQuerySchema.safeParse(query);
+    if (!parsed.success) throw invalidQuery();
+    const { limit, cursor } = parsed.data;
     try {
-      const rows = await this.database.prisma.product.findMany({
-        select: {
-          id: true,
-          skuId: true,
-          article: true,
-          name: true,
-          description: true,
-          categoryId: true,
-          rollLengthMm: true,
-          widthMm: true,
-        },
+      const rows = await this.database.prisma.category.findMany({
+        select: { id: true, slug: true, name: true },
         where: cursor ? { id: { gt: cursor } } : undefined,
         orderBy: { id: 'asc' },
         take: limit + 1,
       });
       const page = rows.slice(0, limit);
-      return {
-        items: page.map((row) =>
-          toPublicProduct({
-            id: row.id,
-            skuId: row.skuId,
-            article: row.article,
-            name: row.name,
-            description: row.description ?? '',
-            categoryId: row.categoryId,
-            media: [],
-            characteristics: {},
-            rollLengthMm: String(row.rollLengthMm),
-            widthMm: String(row.widthMm),
-          }),
-        ),
+      return PublicCategoryListSchema.parse({
+        items: page,
         nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
-      };
-    } catch {
-      throw new ServiceUnavailableException({
-        error: { code: 'CATALOG_UNAVAILABLE', message: 'Catalog unavailable' },
       });
+    } catch {
+      throw unavailable();
+    }
+  }
+}
+
+@Controller('api/v1/products')
+export class ProductsController {
+  constructor(private readonly database: DatabaseService) {}
+
+  @Get()
+  async list(@Query() query: unknown) {
+    const parsed = ProductListQuerySchema.safeParse(query);
+    if (!parsed.success) throw invalidQuery();
+    const { limit, cursor, q, categoryId } = parsed.data;
+    const escaped = q === undefined ? undefined : escapeLikeLiteral(q);
+    try {
+      const rows = await this.database.prisma.product.findMany({
+        select: publicProductSelect,
+        where: {
+          ...(cursor ? { id: { gt: cursor } } : {}),
+          ...(categoryId ? { categoryId } : {}),
+          ...(escaped === undefined
+            ? {}
+            : {
+                OR: [
+                  { name: { contains: escaped, mode: 'insensitive' as const } },
+                  {
+                    article: {
+                      contains: escaped,
+                      mode: 'insensitive' as const,
+                    },
+                  },
+                ],
+              }),
+        },
+        orderBy: { id: 'asc' },
+        take: limit + 1,
+      });
+      const page = rows.slice(0, limit);
+      return PublicProductListSchema.parse({
+        items: page.map(publicProduct),
+        nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
+      });
+    } catch {
+      throw unavailable();
+    }
+  }
+
+  @Get(':id')
+  async detail(@Param() params: unknown, @Query() query: unknown) {
+    const parsed = ProductIdParamsSchema.safeParse(params);
+    if (!parsed.success || !EmptyQuerySchema.safeParse(query).success)
+      throw invalidQuery();
+    let row;
+    try {
+      row = await this.database.prisma.product.findUnique({
+        where: { id: parsed.data.id },
+        select: publicProductSelect,
+      });
+    } catch {
+      throw unavailable();
+    }
+    if (row === null)
+      throw new NotFoundException({
+        error: { code: 'NOT_FOUND', message: 'Product not found' },
+      });
+    try {
+      return publicProduct(row);
+    } catch {
+      throw unavailable();
     }
   }
 }

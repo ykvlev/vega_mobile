@@ -5,9 +5,17 @@ import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
 import { realpathSync, statSync } from 'node:fs';
 import net from 'node:net';
+import { createRequire } from 'node:module';
 import { basename, extname } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import pg from 'pg';
+
+const require = createRequire(import.meta.url);
+const {
+  seedDemoCatalog,
+  DEMO_CATEGORIES,
+  DEMO_PRODUCTS,
+} = require('../dist/demo-seed.js');
 
 function pnpmCliPath() {
   const configuredPath = process.env.npm_execpath;
@@ -234,6 +242,171 @@ test(
             (await fetch(`${base}/api/v1/orders`, { method: 'POST' })).status,
             404,
           );
+        },
+      );
+
+      await t.test(
+        'demo seed is repeatable, isolated and refuses to overwrite unowned identities',
+        async () => {
+          const seedEnvironment = {
+            ...environment,
+            DATABASE_URL: migrationUrl.href,
+          };
+          await seedDemoCatalog(seedEnvironment);
+          await seedDemoCatalog(seedEnvironment);
+          const count = await admin.query(
+            `SELECT COUNT(*) AS count FROM "${schema}"."Product"`,
+          );
+          assert.equal(Number(count.rows[0].count), 4);
+          const owned = await admin.query(
+            `SELECT metadata FROM "${schema}"."Product" WHERE id=$1`,
+            [DEMO_PRODUCTS[0].id],
+          );
+          assert.deepEqual(Object.keys(owned.rows[0].metadata), ['seedOwner']);
+          await admin.query(
+            `UPDATE "${schema}"."Product" SET metadata='{}', name='Preserve user change' WHERE id=$1`,
+            [DEMO_PRODUCTS[0].id],
+          );
+          await assert.rejects(
+            seedDemoCatalog(seedEnvironment),
+            /identity collision/,
+          );
+          const preserved = await admin.query(
+            `SELECT name FROM "${schema}"."Product" WHERE id=$1`,
+            [DEMO_PRODUCTS[0].id],
+          );
+          assert.equal(preserved.rows[0].name, 'Preserve user change');
+        },
+      );
+
+      await t.test(
+        'categories, detail, literal search and filtered pagination use real database rows',
+        async () => {
+          const get = async (path) => {
+            const response = await fetch(`${base}/api/v1${path}`);
+            assert.equal(
+              response.status,
+              200,
+              `Expected successful catalog request: ${path}`,
+            );
+            const body = await response.json();
+            assert.doesNotMatch(
+              JSON.stringify(body),
+              /"price"|"stock"|"metadata"|never-public|unknownPrivateField|"seedOwner"/,
+            );
+            return body;
+          };
+          const categories = await get('/categories?limit=100');
+          assert.equal(categories.items.length, 3);
+          assert.ok(
+            categories.items.some(
+              (category) => category.id === DEMO_CATEGORIES[1].id,
+            ),
+          );
+          const categoryPage1 = await get('/categories?limit=1');
+          const categoryPage2 = await get(
+            `/categories?limit=1&cursor=${categoryPage1.nextCursor}`,
+          );
+          assert.notEqual(categoryPage1.items[0].id, categoryPage2.items[0].id);
+          const detail = await get(`/products/${id}`);
+          assert.equal(detail.skuId, skuId);
+          assert.deepEqual(detail.media, []);
+          assert.deepEqual(detail.characteristics, {});
+          const missing = await fetch(
+            `${base}/api/v1/products/${randomUUID()}`,
+          );
+          assert.equal(missing.status, 404);
+          assert.equal((await missing.json()).error.code, 'NOT_FOUND');
+          assert.equal(
+            (await fetch(`${base}/api/v1/products/not-a-uuid`)).status,
+            400,
+          );
+          assert.equal((await get('/products?q=test-17')).items[0].id, id);
+          assert.equal(
+            (await get(`/products?q=${encodeURIComponent('дЕмО цВеТнАя')}`))
+              .items[0].id,
+            DEMO_PRODUCTS[1].id,
+          );
+          assert.equal(
+            (await get(`/products?categoryId=${DEMO_CATEGORIES[1].id}`)).items
+              .length,
+            2,
+          );
+          assert.equal(
+            (
+              await get(
+                `/products?categoryId=${DEMO_CATEGORIES[1].id}&q=demo-color-17`,
+              )
+            ).items[0].id,
+            DEMO_PRODUCTS[1].id,
+          );
+          assert.equal(
+            (await get('/products?q=no-such-material')).items.length,
+            0,
+          );
+          const literalId = randomUUID();
+          await admin.query(
+            `INSERT INTO "${schema}"."Product"
+          (id,"skuId",article,name,"categoryId","rollLengthMm","widthMm","updatedAt")
+          VALUES ($1,$2,$3,'Literal special test',$4,15000,1520,NOW())`,
+            [literalId, randomUUID(), 'LITERAL%_\\CODE', categoryId],
+          );
+          for (const q of ['%', '_', '\\', 'literal%_\\code']) {
+            const result = await get(`/products?q=${encodeURIComponent(q)}`);
+            assert.deepEqual(
+              result.items.map((item) => item.id),
+              [literalId],
+            );
+          }
+          const seen = [];
+          let cursor;
+          do {
+            const result = await get(
+              `/products?limit=2${cursor ? `&cursor=${cursor}` : ''}`,
+            );
+            seen.push(...result.items.map((item) => item.id));
+            cursor = result.nextCursor;
+            assert.ok(
+              seen.length <= 5,
+              'Pagination must terminate without duplicates',
+            );
+          } while (cursor);
+          assert.equal(seen.length, 5);
+          assert.equal(new Set(seen).size, 5);
+          assert.deepEqual(seen, [...seen].sort());
+        },
+      );
+
+      await t.test(
+        'unknown, commercial and repeated HTTP parameters return safe 400',
+        async () => {
+          for (const path of [
+            '/products?price=1',
+            '/products?stock=1',
+            '/products?sort=price',
+            '/products?limit=1&limit=2',
+            '/products?q=one&q=two',
+            '/products?categoryId=bad',
+            '/products?categoryId=one&categoryId=two',
+            '/products?q[x]=nested',
+            `/products?q=${'x'.repeat(129)}`,
+            '/categories?stock=1',
+            '/categories?limit=1&limit=2',
+            `/products/${id}?include=stock`,
+          ]) {
+            const response = await fetch(`${base}/api/v1${path}`);
+            assert.equal(
+              response.status,
+              400,
+              `Reject malformed/private filter: ${path}`,
+            );
+            const body = await response.json();
+            assert.equal(body.error.code, 'VALIDATION_FAILED');
+            assert.doesNotMatch(
+              JSON.stringify(body),
+              /never-public|unknownPrivateField/,
+            );
+          }
         },
       );
 
