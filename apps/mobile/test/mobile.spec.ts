@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { AuthResponseSchema } from '@vega/contracts';
 import { randomBytes } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -156,15 +157,23 @@ test('real registration is pending, logout revokes API session and web stores ne
   await page.screenshot({ path: info.outputPath('mobile-register-390.png') });
   await page.getByLabel('Телефон', { exact: true }).fill(phone);
   await page.getByLabel('Пароль', { exact: true }).fill(password);
-  const registration = page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname === '/api/v1/auth/register' &&
-      response.request().method() === 'POST',
-  );
+  let registration:
+    | { status: number; result: ReturnType<typeof AuthResponseSchema.parse> }
+    | undefined;
+  // Retain the actual API bytes before the successful login unmounts its form.
+  // Reading a Chromium response body afterwards can race with fetch cleanup.
+  await page.route('**/api/v1/auth/register', async (route) => {
+    const response = await route.fetch({ maxRedirects: 0 });
+    const body = await response.body();
+    registration = {
+      status: response.status(),
+      result: AuthResponseSchema.parse(JSON.parse(body.toString('utf8'))),
+    };
+    await route.fulfill({ response, body });
+  });
   await tab(page, 'Создать аккаунт');
-  const response = await registration;
-  expect(response.status()).toBe(201);
-  const result = await response.json();
+  await expect.poll(() => registration?.status).toBe(201);
+  const result = registration!.result;
   const token = result.session.token as string;
   expect(result.user.commercialAccessStatus).toBe('pending');
   await expect(page.getByTestId('account-screen')).toContainText(
