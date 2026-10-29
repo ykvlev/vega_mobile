@@ -1,0 +1,31 @@
+name: Документация и навигация
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - README.md
+      - docs/**
+      - scripts/check-stage-links.py
+      - scripts/scan-secrets.sh
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-navigation:
+    name: Ссылки этапов и проверка секретов
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Получить полную историю
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Проверить локальные ссылки навигации
+        run: python3 scripts/check-stage-links.py
+      - name: Проверить историю на секреты
+        run: bash scripts/scan-secrets.sh
