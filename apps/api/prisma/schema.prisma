@@ -31,3 +31,37 @@ model Product {
 
   @@index([categoryId, id])
 }
+
+model User {
+  id            String        @id @default(uuid()) @db.Uuid
+  phone         String        @unique @db.VarChar(12)
+  passwordHash  String
+  role          String        @default("customer")
+  phoneVerified Boolean       @default(false)
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  sessions      AuthSession[]
+}
+
+model AuthSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique @db.Char(64)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt  DateTime  @db.Timestamptz(3)
+  revokedAt  DateTime? @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuthRateLimit {
+  scope       String
+  keyHash     String   @db.Char(64)
+  windowStart DateTime @db.Timestamptz(3)
+  windowEnds  DateTime @db.Timestamptz(3)
+  attempts    Int
+
+  @@id([scope, keyHash, windowStart])
+  @@index([windowEnds])
+}
