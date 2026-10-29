@@ -1,6 +1,6 @@
 # VEGA
 
-Основа mobile (Expo), клиентский web/demo (Next.js), API (NestJS) и PostgreSQL.
+Клиент React Native/Expo, клиентский web/demo (Next.js), API (NestJS) и PostgreSQL.
 Реализованы demo-каталог, фотографии и вход по телефону/паролю со статусом
 одобрения клиента. Реальные заказы, платежи и обмен с 1С ещё не подключены.
 Сотрудники целевого продукта работают в 1С; отдельная админка исключена.
@@ -85,6 +85,11 @@ pnpm audit --audit-level high
 Playwright проверяет реальные цепочки web/API/PostgreSQL. Browser-наборы:
 `pnpm test:design`, `test:catalog`, `test:account`, `test:admin`, `test:media`.
 Перед ними собрать API и web; на небольшой машине запускать последовательно.
+Мобильный клиент проверяется отдельно: `pnpm test:mobile` после сборки API
+и `EXPO_PUBLIC_API_URL=http://127.0.0.1:3106 pnpm build:mobile`.
+Каталог, карточка, подбор и аккаунт используют RN-компоненты и настоящий demo API.
+На native токен хранится в SecureStore, в web — только в памяти.
+Настройка HTTPS endpoint и границы проверки: [мобильный клиент](docs/MOBILE-CUSTOMER.md).
 Native-приёмка на устройствах пока не выполнена.
 
 Команды root `build:mobile`/`dev:mobile` отключают необязательную телеметрию Expo

@@ -260,3 +260,25 @@ production web build, typecheck, lint и format PASS. Один промежут�
 Ни SMS/tracking consent, ни цены/наличие/заказы не имитируются по референсу.
 Источник новой визуальной системы: docs/LIME-REDESIGN.md. Удалённый CI требует
 проверки финального head; node-forge audit не отключён и релиз не разрешён.
+
+## Мобильный клиент: feat/mobile-customer-app — 29 октября 2026
+
+База feat/lime-redesign f905d03. Реальные RN-компоненты, typed API, SessionProvider,
+SelectionProvider, native SecureStore и AsyncStorage; не WebView.
+Расположение: apps/mobile/src/{customer-app,mobile-styles,api,session,selection}.
+Expo зависимости закреплены для SDK58. Новые команды test:mobile и CI job
+mobile-customer, включая JS export iOS/Android и browser E2E с PostgreSQL.
+Справка docs/MOBILE-CUSTOMER.md, screenshots docs/media/native-*.png.
+
+Финальная локальная проверка: 3/3 browser E2E PASS, 52 unit/tooling PASS
+(14 mobile), typecheck/lint/format PASS, iOS и Android Hermes JS export PASS.
+Исправлены StrictMode/storage гонки, ложный успех сохранения, переполнение
+ImageBackground на 320px и сбор реальных public response для проверки приватности.
+Native release допускает только HTTPS; LAN HTTP включается только явно в dev.
+Web bearer хранится лишь в памяти; native bearer — в SecureStore.
+
+Эмуляторов/adb/Xcode здесь нет: APK/IPA, SecureStore на физических устройствах,
+background/клавиатура/доступность ещё не проверены. Реальной базы/обмена 1С,
+commercial offers, заказа и платежей нет. Известный node-forge audit не отключён.
+Следующий шаг: native-приёмка и контракт с программистом 1С после выдачи тестовой базы.
+Удалённые результаты CI и ссылка PR фиксируются после push; релиз не разрешён.
