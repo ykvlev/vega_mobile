@@ -254,7 +254,6 @@ export default function DesignPreview() {
   const [material, setMaterial] = useState(demoProducts[0]);
   const [announcement, setAnnouncement] = useState('');
   const [heroImageFailed, setHeroImageFailed] = useState(false);
-  const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const removeControls = useRef(new Map<string, HTMLButtonElement>());
   const emptySelectionControl = useRef<HTMLButtonElement>(null);
@@ -884,13 +883,10 @@ export default function DesignPreview() {
                   В рабочем приложении после входа будут доступны коммерческие
                   условия, история заказов и связь с менеджером.
                 </p>
-                <button
-                  className={s.whiteButton}
-                  onClick={() => dialog.current?.showModal()}
-                >
+                <a className={s.whiteButton} href="/account">
                   Войти
                   <Icon name="arrow" />
-                </button>
+                </a>
                 <span className={s.finePrint}>
                   Сейчас вы смотрите дизайн-прототип.
                 </span>
@@ -940,23 +936,6 @@ export default function DesignPreview() {
           ))}
         </nav>
       </div>
-      <dialog ref={dialog} className={s.dialog} aria-labelledby="login-title">
-        <div className={s.dialogInner}>
-          <span className={s.eyebrow}>Дизайн-прототип</span>
-          <h2 id="login-title">Вход в VEGA</h2>
-          <p>Вход в этом прототипе не подключён.</p>
-          <p className={s.muted}>
-            Мы не запрашиваем телефон или пароль и не создаём аккаунт. Здесь
-            можно изучить только будущий интерфейс.
-          </p>
-          <form method="dialog">
-            <button className={s.primaryButton}>
-              Понятно
-              <Icon name="check" />
-            </button>
-          </form>
-        </div>
-      </dialog>
     </div>
   );
 }
