@@ -1,0 +1,24 @@
+{
+  "cli": {
+    "version": "27.1.0",
+    "requireCommit": true
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_ALLOW_HTTP_DEMO": "false"
+      },
+      "environment": "preview"
+    },
+    "simulator": {
+      "extends": "preview",
+      "ios": {
+        "simulator": true
+      }
+    }
+  }
+}
