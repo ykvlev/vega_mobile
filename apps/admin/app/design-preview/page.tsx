@@ -750,9 +750,12 @@ export default function DesignPreview() {
                   оттенок.
                 </h1>
                 <p className={s.muted}>
-                  Статичная концепция. Живое 3D ещё не подключено.
+                  Ниже — статичный эскиз. Интерактивная сцена доступна отдельно.
                 </p>
               </div>
+              <a href="/configurator3d" className={s.primaryButton}>
+                Открыть 3D-конфигуратор
+              </a>
               <div className={s.studioScene}>
                 <span className={s.sceneTag}>Авторский эскиз / вид сбоку</span>
                 <Car color={material.color} className={s.studioCar} />

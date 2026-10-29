@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/8f492390ddc7a2ae221a1369ef560589cf8c70fb/Models/CarConcept/glTF-Binary/CarConcept.glb",
+    "commit": "8f492390ddc7a2ae221a1369ef560589cf8c70fb",
+    "sha256": "c272098089d78c5cd9fd9f24ff50ee8acf8d932c55f2d55fc10adb6c8998966b",
+    "bytes": 11778688,
+    "triangles": 213347,
+    "images": 14
+  },
+  "optimized": {
+    "file": "car-concept.glb",
+    "sha256": "085d35702432645aa7bc7a487347a218601a03ccf7ef829628fc4853a1d35c1e",
+    "bytes": 5447004,
+    "triangles": 103689,
+    "primitives": 23,
+    "sceneBounds": {
+      "min": [-1.2714082449001278, -0.00024108606243977704, -1.940231204032898],
+      "max": [1.2709126942022095, 1.1486550569534302, 2.4168717861175537]
+    },
+    "decodedRgbaTextureBytesWithoutMipmaps": 7811072,
+    "images": [
+      {
+        "index": 0,
+        "name": "",
+        "width": 512,
+        "height": 512,
+        "bytes": 235232,
+        "sha256": "f6a37375f2b4aa8d022e82e6c99e50a820297a5dd4475a10fad34143561aaff8"
+      },
+      {
+        "index": 1,
+        "name": "",
+        "width": 512,
+        "height": 512,
+        "bytes": 68890,
+        "sha256": "3e47507cc0428a8b417f5e05b94bb9a4d7f2cd4595e897cf383570364513fe53"
+      },
+      {
+        "index": 2,
+        "name": "",
+        "width": 1024,
+        "height": 1024,
+        "bytes": 509368,
+        "sha256": "46d93e062d580e11605f8d5d15e08d2713eb13ed3257833eeb2de3a2d1b97162"
+      },
+      {
+        "index": 3,
+        "name": "",
+        "width": 64,
+        "height": 32,
+        "bytes": 3152,
+        "sha256": "51d9a1fc52552a0f9694a04fd3c7ea6fed38f77db878f6e5a773f987eb2b46e5"
+      },
+      {
+        "index": 4,
+        "name": "",
+        "width": 32,
+        "height": 32,
+        "bytes": 120,
+        "sha256": "53267618ebc0d8bd247b5c012eead3fe132551687fe465aec2feac35ed230ca8"
+      },
+      {
+        "index": 5,
+        "name": "",
+        "width": 1024,
+        "height": 256,
+        "bytes": 25638,
+        "sha256": "a2dd937690f5e26e8705e4f77e77c96f072c5ff6c458a2e3facd4f61ded0cc98"
+      },
+      {
+        "index": 6,
+        "name": "",
+        "width": 128,
+        "height": 128,
+        "bytes": 36868,
+        "sha256": "5528b60f02ad913071304a868c387bab78f87d09b246459a892307132a335ae9"
+      },
+      {
+        "index": 7,
+        "name": "",
+        "width": 128,
+        "height": 128,
+        "bytes": 272,
+        "sha256": "a97a00b6d3ef12adb8e6ea4feecb349a8e45e27a3f4acb22b9eff263c6cf0480"
+      },
+      {
+        "index": 8,
+        "name": "",
+        "width": 128,
+        "height": 128,
+        "bytes": 6538,
+        "sha256": "ca79b7d1701d8f24d68cd9a84e32d53c65e25916391d05cb0f60cfc97ee7ea90"
+      },
+      {
+        "index": 9,
+        "name": "",
+        "width": 512,
+        "height": 128,
+        "bytes": 37672,
+        "sha256": "55cedfc0f8b6ceb801434d0ced820332d86ec25149bbc8491acb52421bf39e8d"
+      }
+    ]
+  },
+  "transformations": {
+    "simplificationRatio": 0.4,
+    "maximumRelativeError": 0.001,
+    "lockBorder": true,
+    "maximumTextureSize": 1024,
+    "textureFormat": "webp-lossless",
+    "meshCompression": false,
+    "removedMaterialVariants": true,
+    "removedEmblems": 1,
+    "flattenedStaticHierarchy": true,
+    "joinedByMaterial": true,
+    "primitivesBeforeJoin": 108,
+    "primitivesAfterJoin": 23,
+    "boundsBeforeJoin": {
+      "min": [-1.2714082958559834, -0.00024107342268636645, -1.940231204032898],
+      "max": [1.2709126970853442, 1.1486550569534302, 2.4168717861175537]
+    },
+    "boundsAfterJoin": {
+      "min": [-1.2714082408576362, -0.00024108304231518218, -1.940231204032898],
+      "max": [1.2709126972496858, 1.1486550569534302, 2.4168717861175537]
+    },
+    "removedLogoImages": [3, 10, 11],
+    "removedLogoImageSha256": [
+      "1453559c58526ec236ea7f90a72b0e49823061e6c26b571928b9ea3b91593e4d",
+      "8cca97aa2b8f10e63751cda6c3d62efa58fb21fed9dcc2a2649f56a7253bc28d",
+      "54297a9940353fdab05356ebd1649d967d0cf316968b15f496903ec00731b2c1"
+    ]
+  },
+  "toolchain": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "meshoptimizer": "1.3.0",
+    "sharp": "0.35.5",
+    "prettier": "3.9.10"
+  },
+  "budget": {
+    "maximumGlbBytes": 6291456,
+    "maximumTriangles": 150000,
+    "maximumPrimitives": 30,
+    "maximumTextureDimension": 1024,
+    "devicePerformanceValidated": false
+  }
+}
