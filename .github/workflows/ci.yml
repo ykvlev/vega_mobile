@@ -370,6 +370,8 @@ jobs:
         run: |
           test ! -e .env
           cp .env.example .env
+      - name: Проверить генерацию native-проектов и разрешения
+        run: pnpm check:mobile:native
       - name: Build API and React Native web export
         run: pnpm build:contracts && pnpm --filter @vega/api build && pnpm build:mobile
       - name: Compile iOS and Android JavaScript bundles

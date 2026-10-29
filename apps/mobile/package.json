@@ -7,7 +7,8 @@
     "start": "expo start",
     "typecheck": "tsc --noEmit",
     "build": "expo export --platform web --max-workers 2",
-    "test:unit": "node --test test/*.test.mjs"
+    "test:unit": "node --test test/*.test.mjs",
+    "eas-build-post-install": "node ../../scripts/mobile-build-env.mjs && pnpm --filter @vega/contracts build"
   },
   "dependencies": {
     "@expo/log-box": "58.0.13",
@@ -19,6 +20,7 @@
     "expo-linking": "58.0.14",
     "expo-router": "58.0.25",
     "expo-secure-store": "58.0.2",
+    "expo-system-ui": "58.0.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.0",

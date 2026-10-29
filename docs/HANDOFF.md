@@ -282,3 +282,24 @@ background/клавиатура/доступность ещё не провер�
 commercial offers, заказа и платежей нет. Известный node-forge audit не отключён.
 Следующий шаг: native-приёмка и контракт с программистом 1С после выдачи тестовой базы.
 Удалённые результаты CI и ссылка PR фиксируются после push; релиз не разрешён.
+
+## Подготовка native-приёмки — feat/mobile-device-preparation
+
+Добавлены временные bundle/package IDs com.vegappf.mobile.preview, совместимый
+expo-system-ui 58.0.6 для Android light theme, отключение ненужных разрешений
+и Face ID. SecureStore backup явно настроен. check:mobile:native генерирует
+настоящие iOS/Android проекты из закреплённого шаблона во временной папке,
+проверяет результат и удаляет его; CI запускает эту проверку до экспорта.
+EAS CLI 27.1.0, профили preview/simulator, post-install проверка HTTPS origin
+и сборка contracts. EAS account/projectId/API origin не предоставлены; облачная
+APK/IPA сборка, подпись и устройства не проверены. Инструкция и матрица
+с фактическим статусом «не проверено»: MOBILE-DEVICE-ACCEPTANCE.md.
+
+Локально: генерация iOS/Android с закреплённым шаблоном PASS; web E2E 3/3,
+workspace typecheck/lint PASS. Build hook проверяется восемью процессными
+регрессиями, включая запрет HTTP, заглушек и утечки URL credentials.
+
+Итоговая локальная проверка среза: 60 unit/tooling, 3/3 mobile browser E2E,
+типы/линтер/форматирование/frozen install, iOS/Android Hermes JS export — PASS.
+Аудит по-прежнему сообщает один HIGH node-forge и один LOW; новых HIGH нет.
+APK/IPA и physical-device acceptance по-прежнему не выполнены.

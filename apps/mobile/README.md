@@ -19,3 +19,6 @@ pnpm dev:mobile
 Инструкции, ограничения и проверка: [MOBILE-CUSTOMER.md](../../docs/MOBILE-CUSTOMER.md).
 `build:mobile` проверяет web-export, не создаёт APK/IPA. Native/device validation
 и подпись пока не выполнены. Не передавать секреты через EXPO_PUBLIC переменные.
+
+Тестовые сборки из Windows и сценарии реальной приёмки:
+[инструкция для устройств](../../docs/MOBILE-DEVICE-ACCEPTANCE.md).
