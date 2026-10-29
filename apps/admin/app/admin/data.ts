@@ -11,9 +11,15 @@ import {
   AuthMeResponseSchema,
   ProductIdParamsSchema,
   PublicCategorySchema,
+  ImageDeleteSchema,
+  ImageOrderSchema,
+  ImageUploadFieldsSchema,
+  ProductImageParamsSchema,
+  type AdminProduct,
   type PublicCategory,
 } from '@vega/contracts';
 import { sessionToken } from '../account/session';
+import { productMediaPath } from '../media-url';
 
 export class AdminApiError extends Error {
   constructor(
@@ -25,7 +31,11 @@ export class AdminApiError extends Error {
       | 'version'
       | 'conflict'
       | 'validation'
-      | 'category_limit',
+      | 'category_limit'
+      | 'image_limit'
+      | 'image_invalid'
+      | 'too_large'
+      | 'processing_busy',
   ) {
     super('Admin operation unavailable');
   }
@@ -112,7 +122,7 @@ export function workspaceHref(
   return `/admin?${params.toString()}`;
 }
 
-function origin(): string {
+export function adminApiOrigin(): string {
   const raw = process.env.AUTH_API_URL;
   if (!raw || raw.length > 2048) throw new AdminApiError('unavailable');
   try {
@@ -136,11 +146,11 @@ function origin(): string {
 async function request(
   path: string,
   token: string,
-  method: 'GET' | 'POST' | 'PATCH' = 'GET',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET',
   body?: unknown,
   deadline?: AbortSignal,
 ): Promise<Response> {
-  const url = new URL(`/api/v1/${path}`, origin());
+  const url = new URL(`/api/v1/${path}`, adminApiOrigin());
   try {
     return await fetch(url, {
       method,
@@ -165,7 +175,19 @@ async function successfulJson(response: Response): Promise<unknown> {
   if (response.status === 401) throw new AdminApiError('guest');
   if (response.status === 403) throw new AdminApiError('forbidden');
   if (response.status === 404) throw new AdminApiError('not_found');
-  if (response.status === 400) throw new AdminApiError('validation');
+  if (response.status === 413) throw new AdminApiError('too_large');
+  if (response.status === 400) {
+    let code: unknown;
+    try {
+      const body = await response.json();
+      code = body?.error?.code;
+    } catch {
+      /* Safe generic validation below. */
+    }
+    throw new AdminApiError(
+      code === 'INVALID_IMAGE' ? 'image_invalid' : 'validation',
+    );
+  }
   if (response.status === 409) {
     let code: unknown;
     try {
@@ -175,7 +197,11 @@ async function successfulJson(response: Response): Promise<unknown> {
       /* Never forward upstream errors. */
     }
     throw new AdminApiError(
-      code === 'VERSION_CONFLICT' ? 'version' : 'conflict',
+      code === 'VERSION_CONFLICT'
+        ? 'version'
+        : code === 'IMAGE_LIMIT_REACHED'
+          ? 'image_limit'
+          : 'conflict',
     );
   }
   if (!response.ok) throw new AdminApiError('unavailable');
@@ -186,7 +212,7 @@ async function successfulJson(response: Response): Promise<unknown> {
   }
 }
 
-async function managerSession() {
+export async function managerSession() {
   const token = await sessionToken();
   if (!token) throw new AdminApiError('guest');
   const parsed = AuthMeResponseSchema.safeParse(
@@ -195,6 +221,15 @@ async function managerSession() {
   if (!parsed.success) throw new AdminApiError('unavailable');
   if (parsed.data.user.role !== 'manager') throw new AdminApiError('forbidden');
   return { token, user: parsed.data.user };
+}
+
+function browserProduct(product: AdminProduct): AdminProduct {
+  const images = product.images.map((image) => {
+    const url = productMediaPath(image.url);
+    if (url !== `/media/${image.id}`) throw new AdminApiError('unavailable');
+    return { ...image, url };
+  });
+  return { ...product, images, media: images.map((image) => image.url) };
 }
 
 async function completeCategories(token: string) {
@@ -262,8 +297,11 @@ export async function loadWorkspace(query: WorkspaceQuery) {
   return {
     user,
     categories,
-    products: products.data,
-    editing: editing?.success ? editing.data : null,
+    products: {
+      ...products.data,
+      items: products.data.items.map(browserProduct),
+    },
+    editing: editing?.success ? browserProduct(editing.data) : null,
   };
 }
 
@@ -290,7 +328,7 @@ export async function createProduct(input: unknown) {
     ),
   );
   if (!result.success) throw new AdminApiError('unavailable');
-  return result.data;
+  return browserProduct(result.data);
 }
 
 export async function updateProduct(id: string, input: unknown) {
@@ -310,5 +348,95 @@ export async function updateProduct(id: string, input: unknown) {
     ),
   );
   if (!result.success) throw new AdminApiError('unavailable');
-  return result.data;
+  return browserProduct(result.data);
+}
+
+export async function uploadProductImage(
+  token: string,
+  id: string,
+  version: string,
+  file: File,
+) {
+  const parsedId = ProductIdParamsSchema.safeParse({ id });
+  const parsedFields = ImageUploadFieldsSchema.safeParse({ version });
+  if (!parsedId.success || !parsedFields.success)
+    throw new AdminApiError('validation');
+  const form = new FormData();
+  form.append('version', String(parsedFields.data.version));
+  const extension =
+    file.type === 'image/jpeg'
+      ? 'jpg'
+      : file.type === 'image/png'
+        ? 'png'
+        : 'webp';
+  form.append('file', file, `upload.${extension}`);
+  let response: Response;
+  try {
+    response = await fetch(
+      new URL(
+        `/api/v1/admin/products/${parsedId.data.id}/images`,
+        adminApiOrigin(),
+      ),
+      {
+        method: 'POST',
+        body: form,
+        redirect: 'error',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+  } catch {
+    throw new AdminApiError('unavailable');
+  }
+  const parsed = AdminProductSchema.safeParse(await successfulJson(response));
+  if (!parsed.success) throw new AdminApiError('unavailable');
+  return browserProduct(parsed.data);
+}
+
+export async function removeProductImage(
+  id: string,
+  imageId: string,
+  input: unknown,
+) {
+  const params = ProductImageParamsSchema.safeParse({ id, imageId });
+  const payload = ImageDeleteSchema.safeParse(input);
+  if (!params.success || !payload.success)
+    throw new AdminApiError('validation');
+  const { token } = await managerSession();
+  const parsed = AdminProductSchema.safeParse(
+    await successfulJson(
+      await request(
+        `admin/products/${params.data.id}/images/${params.data.imageId}`,
+        token,
+        'DELETE',
+        payload.data,
+      ),
+    ),
+  );
+  if (!parsed.success) throw new AdminApiError('unavailable');
+  return browserProduct(parsed.data);
+}
+
+export async function reorderProductImages(id: string, input: unknown) {
+  const params = ProductIdParamsSchema.safeParse({ id });
+  const payload = ImageOrderSchema.safeParse(input);
+  if (!params.success || !payload.success)
+    throw new AdminApiError('validation');
+  const { token } = await managerSession();
+  const parsed = AdminProductSchema.safeParse(
+    await successfulJson(
+      await request(
+        `admin/products/${params.data.id}/images/order`,
+        token,
+        'PATCH',
+        payload.data,
+      ),
+    ),
+  );
+  if (!parsed.success) throw new AdminApiError('unavailable');
+  return browserProduct(parsed.data);
 }

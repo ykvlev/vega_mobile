@@ -213,6 +213,12 @@ test('keyboard profile link opens the connected account screen', async ({
   const login = page.getByRole('link', { name: 'Войти', exact: true });
   await expect(login).toHaveAttribute('href', '/account');
   await login.focus();
+  // A navigation focus callback must not steal focus on the next paint.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
+  );
+  await expect(login).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/account$/);
   await expect(

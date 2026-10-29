@@ -473,3 +473,24 @@
     scroll-behavior: auto;
   }
 }
+
+.cardPhoto {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  background: #111113;
+  border-radius: 16px;
+}
+.photoGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+.photoGallery img {
+  width: 100%;
+  height: 240px;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #111113;
+}

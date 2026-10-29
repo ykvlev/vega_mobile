@@ -177,9 +177,39 @@ export const AdminProductPatchSchema = z
 export const AdminProductListQuerySchema = ProductListQuerySchema.extend({
   status: z.enum(['published', 'draft']).optional(),
 });
+const ImageVersion = z.number().int().min(1).max(2147483646);
+export const ProductImageSchema = z.strictObject({
+  id: z.uuid(),
+  url: z.url(),
+  width: z.number().int().min(1).max(2048),
+  height: z.number().int().min(1).max(2048),
+  sizeBytes: z.number().int().min(1).max(1048576),
+  position: z.number().int().min(0).max(7),
+});
+export const ImageUploadFieldsSchema = z.strictObject({
+  version: z
+    .string()
+    .regex(/^[1-9][0-9]{0,9}$/)
+    .transform(Number)
+    .pipe(ImageVersion),
+});
+export const ImageDeleteSchema = z.strictObject({ version: ImageVersion });
+export const ImageOrderSchema = z.strictObject({
+  version: ImageVersion,
+  imageIds: z
+    .array(z.uuid())
+    .max(8)
+    .refine((ids) => new Set(ids).size === ids.length),
+});
+export const ProductImageParamsSchema = z.strictObject({
+  id: z.uuid(),
+  imageId: z.uuid(),
+});
+export const MediaIdParamsSchema = z.strictObject({ id: z.uuid() });
 export const AdminProductSchema = PublicProductSchema.extend({
   isPublished: z.boolean(),
   version: z.number().int().positive(),
+  images: z.array(ProductImageSchema).max(8).default([]),
 });
 export const AdminProductListSchema = z.strictObject({
   items: z.array(AdminProductSchema),

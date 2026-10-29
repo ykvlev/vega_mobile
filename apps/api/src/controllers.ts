@@ -8,7 +8,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import {
-  toPublicProduct,
   ProductListQuerySchema,
   CategoryListQuerySchema,
   ProductIdParamsSchema,
@@ -17,6 +16,7 @@ import {
   PublicCategoryListSchema,
 } from '@vega/contracts';
 import { DatabaseService } from './database';
+import { publicProduct, publicProductSelect } from './catalog-projection';
 
 @Controller('health')
 export class HealthController {
@@ -58,45 +58,6 @@ function unavailable(): ServiceUnavailableException {
 // Prisma contains uses PostgreSQL LIKE patterns: escape user wildcard characters.
 export function escapeLikeLiteral(value: string): string {
   return value.replace(/[\\%_]/g, (character) => `\\${character}`);
-}
-
-export const publicProductSelect = {
-  id: true,
-  skuId: true,
-  article: true,
-  name: true,
-  description: true,
-  categoryId: true,
-  rollLengthMm: true,
-  widthMm: true,
-  characteristics: true,
-} as const;
-
-export type ProductRow = {
-  id: string;
-  skuId: string;
-  article: string;
-  name: string;
-  description: string | null;
-  categoryId: string;
-  rollLengthMm: number;
-  widthMm: number;
-  characteristics: unknown;
-};
-
-export function publicProduct(row: ProductRow) {
-  return toPublicProduct({
-    id: row.id,
-    skuId: row.skuId,
-    article: row.article,
-    name: row.name,
-    description: row.description ?? '',
-    categoryId: row.categoryId,
-    media: [],
-    characteristics: row.characteristics,
-    rollLengthMm: String(row.rollLengthMm),
-    widthMm: String(row.widthMm),
-  });
 }
 
 @Controller('api/v1/categories')
@@ -162,7 +123,9 @@ export class ProductsController {
       });
       const page = rows.slice(0, limit);
       return PublicProductListSchema.parse({
-        items: page.map(publicProduct),
+        items: page.map((row) =>
+          publicProduct(row, this.database.publicMediaOrigin),
+        ),
         nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
       });
     } catch {
@@ -189,7 +152,7 @@ export class ProductsController {
         error: { code: 'NOT_FOUND', message: 'Product not found' },
       });
     try {
-      return publicProduct(row);
+      return publicProduct(row, this.database.publicMediaOrigin);
     } catch {
       throw unavailable();
     }

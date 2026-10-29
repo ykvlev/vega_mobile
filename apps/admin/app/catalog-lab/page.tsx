@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { productMediaPaths } from '../media-url';
 import { darkColors } from '@vega/design-tokens';
 import {
   CatalogReadError,
@@ -225,6 +227,20 @@ export default async function CatalogLab({
                 {categoryName(selected.categoryId)} / {selected.article}
               </p>
               <h2 id="selected-product-title">{selected.name}</h2>
+              {productMediaPaths(selected.media).length > 0 && (
+                <div className={s.photoGallery} aria-label="Фотографии товара">
+                  {productMediaPaths(selected.media).map((path, index) => (
+                    <Image
+                      key={path}
+                      src={path}
+                      width={640}
+                      height={480}
+                      unoptimized
+                      alt={`${selected.name} — фото ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
               <p className={s.description}>
                 {selected.description || 'Описание пока не добавлено.'}
               </p>
@@ -289,10 +305,21 @@ export default async function CatalogLab({
                 href={catalogHref(query, { selected: product.id })}
                 aria-label={`Открыть ${product.name}`}
               >
-                <div className={s.materialArt} aria-hidden="true">
-                  <span />
-                  <i />
-                </div>
+                {productMediaPaths(product.media)[0] ? (
+                  <Image
+                    className={s.cardPhoto}
+                    src={productMediaPaths(product.media)[0]!}
+                    width={640}
+                    height={480}
+                    unoptimized
+                    alt={`${product.name} — фото`}
+                  />
+                ) : (
+                  <div className={s.materialArt} aria-hidden="true">
+                    <span />
+                    <i />
+                  </div>
+                )}
                 <span className={s.article}>{product.article}</span>
                 <h3>{product.name}</h3>
                 <span className={s.categoryName}>

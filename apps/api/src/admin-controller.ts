@@ -13,7 +13,6 @@ import {
   AdminCategoryListSchema,
   AdminProductCreateSchema,
   AdminProductPatchSchema,
-  AdminProductSchema,
   AdminProductListSchema,
   AdminProductListQuerySchema,
   CategoryListQuerySchema,
@@ -27,26 +26,12 @@ import { AuthService } from './auth-service';
 import { bearer, type AuthRequest } from './auth-controller';
 import { AuthError } from './auth-errors';
 import { DatabaseService } from './database';
+import { escapeLikeLiteral } from './controllers';
 import {
-  escapeLikeLiteral,
-  publicProduct,
-  publicProductSelect,
-  type ProductRow,
-} from './controllers';
+  adminProduct as response,
+  adminProductSelect as adminSelect,
+} from './catalog-projection';
 
-const adminSelect = {
-  ...publicProductSelect,
-  isPublished: true,
-  version: true,
-} as const;
-type AdminRow = ProductRow & { isPublished: boolean; version: number };
-function response(row: AdminRow) {
-  return AdminProductSchema.parse({
-    ...publicProduct(row),
-    isPublished: row.isPublished,
-    version: row.version,
-  });
-}
 function invalid(): never {
   throw new AuthError(400, 'VALIDATION_FAILED');
 }
@@ -173,7 +158,9 @@ export class AdminController {
       });
       const page = rows.slice(0, limit);
       return AdminProductListSchema.parse({
-        items: page.map(response),
+        items: page.map((row) =>
+          response(row, this.database.publicMediaOrigin),
+        ),
         nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
       });
     } catch (error) {
@@ -197,7 +184,7 @@ export class AdminController {
         select: adminSelect,
       });
       if (!product) throw new AuthError(404, 'NOT_FOUND');
-      return response(product);
+      return response(product, this.database.publicMediaOrigin);
     } catch (error) {
       safeFailure(error);
     }
@@ -232,7 +219,7 @@ export class AdminController {
             version: product.version,
           },
         });
-        return response(product);
+        return response(product, this.database.publicMediaOrigin);
       });
     } catch (error) {
       safeFailure(error);
@@ -284,7 +271,7 @@ export class AdminController {
             version: product.version,
           },
         });
-        return response(product);
+        return response(product, this.database.publicMediaOrigin);
       });
     } catch (error) {
       safeFailure(error);

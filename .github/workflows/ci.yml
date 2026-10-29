@@ -271,3 +271,58 @@ jobs:
           path: test-results/admin
           if-no-files-found: warn
           retention-days: 7
+
+  product-media:
+    name: product-media
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Independent demo product image checks only. The quality job remains mandatory and fails
+    # on the unresolved forge advisory; this job is not a release approval.
+    env:
+      CI: 'true'
+      DATABASE_URL: postgresql://vega:vega@127.0.0.1:5432/vega_test?schema=public
+    services:
+      postgres:
+        image: postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641
+        env:
+          POSTGRES_USER: vega
+          POSTGRES_PASSWORD: vega
+          POSTGRES_DB: vega_test
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vega -d vega_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.19.0
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@10.34.8
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium for browser checks
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Reproduce local development environment fixture
+        run: |
+          test ! -e .env
+          cp .env.example .env
+      - name: Build API and product image UI
+        run: pnpm build:contracts && pnpm --filter @vega/api build && pnpm build:admin
+      - name: Check real product image upload and visibility
+        run: pnpm test:media
+      - name: Save safe product image screenshots
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: product-media-browser-results
+          path: test-results/media
+          if-no-files-found: warn
+          retention-days: 7

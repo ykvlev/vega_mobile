@@ -22,6 +22,14 @@ async function main(): Promise<void> {
     ) => {
       if (isAuthPath(request.originalUrl ?? request.url))
         response.setHeader('Cache-Control', 'no-store');
+      if (
+        (request.originalUrl ?? request.url)
+          .split('?')[0]
+          ?.toLowerCase()
+          .startsWith('/api/v1/media/')
+      ) {
+        response.setHeader('X-Content-Type-Options', 'nosniff');
+      }
       next();
     },
   );

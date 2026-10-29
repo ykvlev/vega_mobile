@@ -6,9 +6,11 @@ import type { AppConfig } from './config';
 
 export class DatabaseService implements OnModuleDestroy {
   readonly prisma: PrismaClient;
+  readonly publicMediaOrigin: string;
   private readonly healthPool: Pool;
 
   constructor(config: AppConfig) {
+    this.publicMediaOrigin = config.publicMediaOrigin;
     const connection = {
       connectionString: config.databaseUrl,
       connectionTimeoutMillis: config.databaseTimeoutMs,

@@ -19,6 +19,10 @@ const messages: Record<string, string> = {
   VERSION_CONFLICT: 'Product changed; reload before saving',
   CONFLICT: 'Catalog identity conflict',
   ADMIN_UNAVAILABLE: 'Catalog management unavailable',
+  MEDIA_UNAVAILABLE: 'Image unavailable',
+  INVALID_IMAGE: 'Invalid or unsupported image',
+  IMAGE_LIMIT_REACHED: 'Image limit reached',
+  IMAGE_PROCESSING_BUSY: 'Image processing busy',
 };
 
 export class AuthError extends HttpException {
@@ -41,7 +45,9 @@ export function isAuthPath(url: string): boolean {
     path === '/api/v1/auth' ||
     path?.startsWith('/api/v1/auth/') === true ||
     path === '/api/v1/admin' ||
-    path?.startsWith('/api/v1/admin/') === true
+    path?.startsWith('/api/v1/admin/') === true ||
+    path === '/api/v1/media' ||
+    path?.startsWith('/api/v1/media/') === true
   );
 }
 

@@ -10,6 +10,8 @@ import {
 import { millimetersToMeters } from './model';
 import { Arrow, CategoryEditor, ProductEditor, PublicationForm } from './forms';
 import { EditorGuard } from './editor-guard';
+import { ProductPhotos } from './photos';
+import Image from 'next/image';
 import s from './admin.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -289,6 +291,7 @@ export default async function AdminPage({
                   product={data.editing}
                   categories={data.categories.items}
                 />
+                <ProductPhotos product={data.editing} />
               </div>
               <aside className={s.publicationPanel}>
                 <span className={s.eyebrow}>Видимость</span>
@@ -325,11 +328,6 @@ export default async function AdminPage({
                     карточку.
                   </p>
                 )}
-                <div className={s.panelDivider} />
-                <h3>Изображения</h3>
-                <p className={s.panelNote}>
-                  Загрузка фотографий пока не подключена.
-                </p>
               </aside>
             </div>
           </EditorGuard>
@@ -545,7 +543,18 @@ export default async function AdminPage({
                         <td>
                           <div className={s.productName}>
                             <span className={s.productThumb} aria-hidden="true">
-                              <i />
+                              {product.images[0] ? (
+                                <Image
+                                  src={product.images[0].url}
+                                  alt=""
+                                  width={44}
+                                  height={48}
+                                  unoptimized
+                                  className={s.tablePhoto}
+                                />
+                              ) : (
+                                <i />
+                              )}
                             </span>
                             <span>
                               <strong>{product.name}</strong>
