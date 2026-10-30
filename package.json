@@ -36,7 +36,8 @@
     "check:mobile:native": "node scripts/mobile-native-check.mjs",
     "test:3d": "pnpm check:3d && playwright test --config apps/admin/test/configurator3d.config.ts",
     "assets:3d": "node apps/admin/scripts/prepare-car.mjs",
-    "check:3d": "node apps/admin/scripts/check-car.mjs"
+    "check:3d": "node apps/admin/scripts/check-car.mjs",
+    "test:mobile:3d": "playwright test --config apps/mobile/test/studio.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

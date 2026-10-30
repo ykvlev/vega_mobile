@@ -34,6 +34,7 @@ import { useSession } from './session';
 import { useSelection } from './selection';
 import { palette, styles as s } from './mobile-styles';
 import hero from '../assets/vega-hero.png';
+import { StudioScreen } from './studio-screen';
 
 type Tab = 'home' | 'catalog' | 'selection' | 'account';
 type Unit = 'meter' | 'roll';
@@ -155,9 +156,11 @@ function ProductVisual({ product }: { product: PublicProduct }) {
 function HomeScreen({
   catalog,
   account,
+  studio,
 }: {
   catalog: (categoryId?: string) => void;
   account: () => void;
+  studio: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const [categories, setCategories] = useState<PublicCategory[]>([]);
@@ -216,6 +219,14 @@ function HomeScreen({
           style={s.heroCta}
         >
           <Text style={s.heroCtaText}>Выбрать плёнку</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Открыть 3D-студию"
+          onPress={studio}
+          style={s.heroCta}
+        >
+          <Text style={s.heroCtaText}>Открыть 3D-студию</Text>
         </Pressable>
       </View>
       <Pressable
@@ -964,10 +975,15 @@ export function CustomerApp() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDraft, setSearchDraft] = useState('');
   const [keyboard, setKeyboard] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
   const selection = useSelection();
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (studioOpen) {
+        setStudioOpen(false);
+        return true;
+      }
       if (productId) {
         setProductId(null);
         return true;
@@ -979,7 +995,7 @@ export function CustomerApp() {
       return false;
     });
     return () => listener.remove();
-  }, [productId, tab]);
+  }, [productId, tab, studioOpen]);
   useEffect(() => {
     const shown = Keyboard.addListener('keyboardDidShow', () =>
       setKeyboard(true),
@@ -994,6 +1010,7 @@ export function CustomerApp() {
   }, []);
   const navigate = (next: Tab) => {
     Keyboard.dismiss();
+    setStudioOpen(false);
     setProductId(null);
     setTab(next);
   };
@@ -1008,9 +1025,20 @@ export function CustomerApp() {
     setTab('catalog');
   };
   let content: ReactNode;
-  if (tab === 'home')
+  if (studioOpen)
     content = (
-      <HomeScreen catalog={catalog} account={() => navigate('account')} />
+      <StudioScreen
+        back={() => setStudioOpen(false)}
+        catalog={() => catalog()}
+      />
+    );
+  else if (tab === 'home')
+    content = (
+      <HomeScreen
+        catalog={catalog}
+        account={() => navigate('account')}
+        studio={() => setStudioOpen(true)}
+      />
     );
   else if (tab === 'catalog')
     content = productId ? (
@@ -1036,14 +1064,18 @@ export function CustomerApp() {
   else content = <AccountScreen />;
   return (
     <SafeAreaView style={s.app} edges={['left', 'right']}>
-      <StatusBar barStyle={tab === 'home' ? 'light-content' : 'dark-content'} />
+      <StatusBar
+        barStyle={
+          tab === 'home' && !studioOpen ? 'light-content' : 'dark-content'
+        }
+      />
       <KeyboardAvoidingView
         style={s.content}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {content}
       </KeyboardAvoidingView>
-      {!keyboard && (
+      {!keyboard && !studioOpen && (
         <View
           style={[
             s.navigation,
