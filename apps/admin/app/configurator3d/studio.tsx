@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import {
+  DEFAULT_STUDIO_CHOICE,
+  StudioChoiceMessageSchema,
+  type StudioChoice,
+} from '@vega/contracts';
 import Image from 'next/image';
 import {
   colors,
@@ -32,13 +37,15 @@ function Arrow() {
 type Phase = 'loading' | 'ready' | 'failed' | 'paused';
 export function ConfiguratorStudio({
   embedded = false,
+  initialChoice = DEFAULT_STUDIO_CHOICE,
 }: {
   embedded?: boolean;
+  initialChoice?: Readonly<StudioChoice>;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const viewer = useRef<Viewer | null>(null);
-  const [color, setColor] = useState<ColorId>('graphite');
-  const [finish, setFinish] = useState<FinishId>('gloss');
+  const [color, setColor] = useState<ColorId>(initialChoice.color);
+  const [finish, setFinish] = useState<FinishId>(initialChoice.finish);
   const [phase, setPhase] = useState<Phase>('loading');
   const [enabled, setEnabled] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -90,15 +97,35 @@ export function ConfiguratorStudio({
     };
   }, [attempt, enabled]);
 
+  function publish(message: unknown) {
+    if (!embedded) return;
+    const native = (
+      window as Window & {
+        ReactNativeWebView?: { postMessage: (value: string) => void };
+      }
+    ).ReactNativeWebView;
+    native?.postMessage(JSON.stringify(message));
+    if (window.parent !== window) window.parent.postMessage(message, '*');
+  }
+  function applyChoice(next: StudioChoice) {
+    const message = StudioChoiceMessageSchema.parse({
+      version: 1,
+      type: 'vega-studio-choice',
+      choice: next,
+    });
+    choice.current = message.choice;
+    setColor(next.color);
+    setFinish(next.finish);
+    viewer.current?.setMaterial(next.color, next.finish);
+    publish(message);
+  }
   function selectColor(next: ColorId) {
-    setColor(next);
-    viewer.current?.setMaterial(next, finish);
+    applyChoice({ color: next, finish: choice.current.finish });
   }
   function selectFinish(next: FinishId) {
-    setFinish(next);
-    viewer.current?.setMaterial(color, next);
+    applyChoice({ color: choice.current.color, finish: next });
   }
-  // One-way public lifecycle only. No auth, material commands, URL inputs or
+  // One-way public lifecycle and known demo IDs only. No auth, commands or
   // parent-supplied JavaScript cross this boundary. The host validates source,
   // origin (web) / document URL (native), version and the exact message schema.
   useEffect(() => {
@@ -282,6 +309,13 @@ export function ConfiguratorStudio({
               ))}
             </div>
           </fieldset>
+          <button
+            className={s.resetChoice}
+            disabled={!ready}
+            onClick={() => applyChoice(DEFAULT_STUDIO_CHOICE)}
+          >
+            Сбросить выбор
+          </button>
           <p className={s.selection} aria-live="polite">
             {selected.name} / {selectedFinish.name}
           </p>

@@ -370,3 +370,33 @@ embedded-layout1/1 и mobile-studio3/3 повторно прошли; резул
 Независимый review безопасности блокеров не нашёл; его замечание по embedded
 skip-link устранено. Audit: один прежний HIGH node-forge и один LOW.
 Новый CI job mobile-studio независим от quality и не заменяет выпускной gate.
+
+
+## Текущий срез: память выбора 3D
+
+Ветка `feat/studio-choice-memory` основана на `feat/mobile-3d-studio` (PR15).
+Общие StudioChoiceSchema / StudioChoiceMessageSchema в @vega/contracts
+ограничивают public demo palette шестью цветами и тремя поверхностями.
+Мобильный hook хранит только version+choice в AsyncStorage, переживает уход
+из студии/возврат/перезапуск. Очередь I/O и generation/revision защищают от
+позднего чтения, StrictMode и устаревших ошибок записи. При ошибке выбор остаётся
+в памяти; экран предлагает сохранить текущий выбор повторно.
+
+Embed принимает только известные color/finish query; неизвестные/повторные
+параметры дают графит/глянец. При выборе отправляет новый публичный envelope
+vega-studio-choice v1, но не исполняет команды host. seedRef фиксирует URL
+на время экземпляра, чтобы save не перезапускал GPU/модель/камеру. Явный сброс
+сохраняется. В каталоге появился вход в студию, возврат сохраняет вкладку/поиск.
+Цена, наличие, SKU и заказ с demo palette не связываются.
+
+Предыдущий срез PR15: все8 интерфейсных jobs CI41022605972 прошли; quality
+остановился только на Audit all workspace dependencies (прежний node-forge).
+Main docs CI41022697771 прошёл. База1С, реальные sedan/crossover ассеты,
+HTTPS-хост и физическая native-приёмка по-прежнему отсутствуют.
+
+Итог локальных проверок памяти выбора: 75 unit/tooling, WebGL8/8,
+mobile-studio5/5 и прежние mobile API/аккаунт E2E3/3 — PASS. Типы workspace,
+линтер/формат/diff-check, production Next/mobile web builds и Hermes JS exports
+iOS/Android — PASS. Native-проекты/permissions не менялись; APK/IPA и устройства
+не проверялись. Независимый review схем, транспорта и lifecycle блокеров не нашёл.
+Новые browser-сценарии включены в существующие configurator-3d/mobile-studio CI.

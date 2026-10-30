@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { studioPhase } from './studio-policy';
+import { studioPhase, studioChoiceMessage } from './studio-policy';
 import type { StudioTransportProps } from './studio-transport.types';
 
 export function StudioTransport({
   uri,
   onPhase,
+  onChoice,
   onFailure,
 }: StudioTransportProps) {
   const frame = useRef<HTMLIFrameElement>(null);
@@ -17,10 +18,12 @@ export function StudioTransport({
         return;
       const phase = studioPhase(event.data);
       if (phase) onPhase(phase);
+      const choice = studioChoiceMessage(event.data);
+      if (choice) onChoice(choice);
     };
     window.addEventListener('message', receive);
     return () => window.removeEventListener('message', receive);
-  }, [uri, onPhase]);
+  }, [uri, onPhase, onChoice]);
   return (
     <iframe
       ref={frame}

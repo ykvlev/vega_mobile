@@ -17,8 +17,14 @@ const code = ts.transpileModule(
   },
 ).outputText;
 const exports = {};
-vm.runInNewContext(`(function(exports){${code}\n})`, { URL })(exports);
-const { studioUrl, studioPhase, allowsStudioNavigation } = exports;
+vm.runInNewContext(`(function(exports){${code}\n})`, { URL, require })(exports);
+const {
+  studioUrl,
+  studioPhase,
+  allowsStudioNavigation,
+  studioChoiceUrl,
+  studioChoiceMessage,
+} = exports;
 const input = {
   configured: 'https://studio.vega.example',
   platform: 'ios',
@@ -126,4 +132,52 @@ test('bridge accepts only the public versioned phase envelope', () => {
   const cyclic = {};
   cyclic.self = cyclic;
   assert.equal(studioPhase(cyclic), null);
+});
+
+test('choice URLs contain only validated public IDs and retain an exact navigation boundary', () => {
+  const uri = studioChoiceUrl(entry, { color: 'carmine', finish: 'satin' });
+  assert.equal(uri, entry + '?color=carmine&finish=satin');
+  assert.equal(allowsStudioNavigation(uri, uri), true);
+  assert.equal(allowsStudioNavigation(entry, uri), false);
+  assert.equal(
+    allowsStudioNavigation(uri + '&url=https://other.invalid', uri),
+    false,
+  );
+  assert.throws(() =>
+    studioChoiceUrl(entry, { color: 'invalid', finish: 'satin' }),
+  );
+  assert.throws(() =>
+    studioChoiceUrl(entry + '?url=other', {
+      color: 'carmine',
+      finish: 'satin',
+    }),
+  );
+});
+
+test('choice messages reject malformed, oversized, extended and unknown palettes', () => {
+  const choice = { color: 'carmine', finish: 'satin' };
+  assert.equal(
+    JSON.stringify(
+      studioChoiceMessage({ version: 1, type: 'vega-studio-choice', choice }),
+    ),
+    JSON.stringify(choice),
+  );
+  for (const payload of [
+    null,
+    ' '.repeat(257),
+    'not JSON',
+    { version: 2, type: 'vega-studio-choice', choice },
+    { version: 1, type: 'vega-studio-choice', choice, token: 'forbidden' },
+    {
+      version: 1,
+      type: 'vega-studio-choice',
+      choice: { color: 'unknown', finish: 'satin' },
+    },
+    {
+      version: 1,
+      type: 'vega-studio-choice',
+      choice: { ...choice, url: 'https://other.invalid' },
+    },
+  ])
+    assert.equal(studioChoiceMessage(payload), null);
 });

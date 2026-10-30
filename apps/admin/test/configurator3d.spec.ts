@@ -307,6 +307,11 @@ test('embedded scene is self-contained and emits only the public lifecycle', asy
   expect(messages).toEqual([
     { version: 1, type: 'vega-studio', phase: 'loading' },
     { version: 1, type: 'vega-studio', phase: 'ready' },
+    {
+      version: 1,
+      type: 'vega-studio-choice',
+      choice: { color: 'carmine', finish: 'gloss' },
+    },
   ]);
   await page.getByRole('button', { name: 'Скрыть 3D', exact: true }).click();
   await expect(scene(page).locator('canvas')).toHaveCount(0);
@@ -321,4 +326,19 @@ test('embedded scene is self-contained and emits only the public lifecycle', asy
     .toEqual({ version: 1, type: 'vega-studio', phase: 'paused' });
   await page.setViewportSize({ width: 320, height: 740 });
   await noOverflow(page);
+});
+
+test('embedded startup accepts known initial choices and discards invalid query payloads', async ({
+  page,
+}) => {
+  await page.goto('/configurator3d/embed?color=cobalt&finish=matte');
+  await expect(scene(page)).toHaveAttribute('data-phase', 'ready');
+  await expect(scene(page)).toHaveAttribute('data-color', '304f9d');
+  await expect(scene(page)).toHaveAttribute('data-roughness', '0.8');
+  await page.goto(
+    '/configurator3d/embed?color=cobalt&color=forest&finish=matte&url=https://invalid.example',
+  );
+  await expect(scene(page)).toHaveAttribute('data-phase', 'ready');
+  await expect(scene(page)).toHaveAttribute('data-color', '33383d');
+  await expect(scene(page)).toHaveAttribute('data-roughness', '0.16');
 });
