@@ -430,3 +430,39 @@ jobs:
           path: test-results/configurator3d
           if-no-files-found: warn
           retention-days: 7
+
+  mobile-studio:
+    name: mobile-studio
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Independent mobile web + real WebGL checks, not physical device acceptance.
+    env:
+      EXPO_PUBLIC_API_URL: http://127.0.0.1:3106
+      EXPO_PUBLIC_STUDIO_URL: http://127.0.0.1:3108
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.19.0
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@10.34.8
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium for browser checks
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Build isolated studio and mobile entry
+        run: pnpm build:admin && pnpm build:mobile
+      - name: Проверить мобильный вход, настоящий WebGL и ошибки загрузки
+        run: pnpm test:mobile:3d
+      - name: Save mobile studio screenshots and failure traces
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: mobile-studio-browser-results
+          path: test-results/mobile-studio
+          if-no-files-found: warn
+          retention-days: 7

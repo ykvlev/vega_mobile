@@ -345,3 +345,28 @@ scripts/check-car.mjs и test/configurator3d.*. Инструкция: 3D-CONFIGU
 Native-встраивание, реальные материалы/SKU, 1С и физические устройства не приняты.
 Реальную базу 1С по-прежнему ждём. Несостоявшаяся ветка selection-validation
 удалена локально без изменений кода; к серверному заказу не переходили.
+
+
+## Текущий срез: мобильный вход в 3D, 30 октября 2026
+
+Ветка `feat/mobile-3d-studio`, основана на `feat/3d-configurator` (PR14).
+На главной мобильного приложения добавлена кнопка 3D; отдельный экран сохраняет
+выход и каталог при любых ошибках. Native WebView14.0.1 и browser cross-origin
+iframe подключают `/configurator3d/embed` отдельного хоста. Односторонний строгий
+bridge передаёт только публичную фазу; credentials/команды не передаются.
+При failed/таймауте30сек транспорт удаляется, повтор создаёт новый экземпляр.
+
+Нужен `EXPO_PUBLIC_STUDIO_URL` при Expo export; без него каталог доступен,
+3D показывает fallback. HTTPS-хост пока не развёрнут. На физических телефонах не
+проверено, выбор материала не сохраняется между открытиями и не связан с SKU.
+Модели массовых седанов/кроссоверов ещё не получены; текущая модель — концепт.
+Документация протокола и проверок: `docs/3D-CONFIGURATOR.md`.
+
+Проверки этого среза: 64 unit/tooling, workspace typecheck/lint/format,
+frozen install, production Next/mobile web build, native prebuild и Hermes
+exports iOS/Android — PASS. WebGL7/7, мобильная studio-интеграция3/3 и прежние
+mobile API/аккаунт E2E3/3 — PASS. После финального уплотнения кнопок ракурса
+embedded-layout1/1 и mobile-studio3/3 повторно прошли; результат записан в PR.
+Независимый review безопасности блокеров не нашёл; его замечание по embedded
+skip-link устранено. Audit: один прежний HIGH node-forge и один LOW.
+Новый CI job mobile-studio независим от quality и не заменяет выпускной gate.

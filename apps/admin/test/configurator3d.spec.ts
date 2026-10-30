@@ -273,3 +273,52 @@ test('embedded external resource URLs are rejected before GLTFLoader can request
   await expect(scene(page)).toHaveAttribute('data-phase', 'failed');
   expect(external).toEqual([]);
 });
+
+test('embedded scene is self-contained and emits only the public lifecycle', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const messages: unknown[] = [];
+    Object.assign(window, {
+      __studioMessages: messages,
+      ReactNativeWebView: {
+        postMessage(value: string) {
+          messages.push(JSON.parse(value));
+        },
+      },
+    });
+  });
+  const response = await page.goto('/configurator3d/embed');
+  expect(response?.headers()['content-security-policy']).toContain(
+    "connect-src 'self'",
+  );
+  expect(response?.headers()['referrer-policy']).toBe('no-referrer');
+  await expect(scene(page)).toHaveAttribute('data-phase', 'ready');
+  // No route to auth/catalog or external navigation inside the scene. The
+  // document's common skip link is an in-page anchor, not a navigation escape.
+  expect(await page.locator('a:not([href^="#"])').count()).toBe(0);
+  await expect(page.getByText('Car Concept:', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Цвет: Кармин', exact: true }).click();
+  await expect(scene(page)).toHaveAttribute('data-color', '9e203a');
+  const messages = await page.evaluate(
+    () =>
+      (window as Window & { __studioMessages?: unknown[] }).__studioMessages,
+  );
+  expect(messages).toEqual([
+    { version: 1, type: 'vega-studio', phase: 'loading' },
+    { version: 1, type: 'vega-studio', phase: 'ready' },
+  ]);
+  await page.getByRole('button', { name: 'Скрыть 3D', exact: true }).click();
+  await expect(scene(page).locator('canvas')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (
+          window as Window & { __studioMessages?: unknown[] }
+        ).__studioMessages?.at(-1),
+      ),
+    )
+    .toEqual({ version: 1, type: 'vega-studio', phase: 'paused' });
+  await page.setViewportSize({ width: 320, height: 740 });
+  await noOverflow(page);
+});

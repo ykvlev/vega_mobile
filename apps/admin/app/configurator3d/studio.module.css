@@ -359,3 +359,35 @@
 .attribution a svg {
   vertical-align: middle;
 }
+
+/* The app supplies its own header. Keep the embedded controls compact rather
+   than repeating the standalone landing-page introduction. */
+.embedded .layout {
+  min-height: 0;
+}
+.embedded .eyebrow,
+.embedded .options h1,
+.embedded .intro,
+.embedded .sceneFooter > span {
+  display: none;
+}
+.embedded .options {
+  padding: 20px 24px;
+}
+.embedded .scene {
+  height: clamp(240px, 35dvh, 360px);
+  min-height: 240px;
+}
+.embedded .viewBar {
+  flex-wrap: nowrap;
+  padding: 4px 10px;
+  gap: 0;
+}
+.embedded .viewBar button {
+  min-width: 44px;
+  padding: 8px 4px;
+  font-size: 10px;
+}
+:global(body):has(.embedded) > :global(.skip-link) {
+  display: none;
+}
