@@ -35,6 +35,7 @@ import { useSelection } from './selection';
 import { palette, styles as s } from './mobile-styles';
 import hero from '../assets/vega-hero.png';
 import { StudioScreen } from './studio-screen';
+import { useStudioChoice } from './studio-choice';
 
 type Tab = 'home' | 'catalog' | 'selection' | 'account';
 type Unit = 'meter' | 'roll';
@@ -244,6 +245,7 @@ function HomeScreen({
 }
 
 function CatalogScreen({
+  onStudio,
   categoryId,
   onCategory,
   onProduct,
@@ -252,6 +254,7 @@ function CatalogScreen({
   draftQuery,
   onDraftQuery,
 }: {
+  onStudio: () => void;
   categoryId: string | undefined;
   onCategory: (id: string | undefined) => void;
   onProduct: (id: string) => void;
@@ -343,6 +346,14 @@ function CatalogScreen({
     >
       <Header title="Каталог" />
       <View style={s.body}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Открыть 3D-студию"
+          onPress={onStudio}
+          style={s.textButton}
+        >
+          <Text style={s.linkText}>3D-эскиз автомобиля</Text>
+        </Pressable>
         <View style={s.searchRow}>
           <TextInput
             accessibilityLabel="Поиск по названию или артикулу"
@@ -976,6 +987,7 @@ export function CustomerApp() {
   const [searchDraft, setSearchDraft] = useState('');
   const [keyboard, setKeyboard] = useState(false);
   const [studioOpen, setStudioOpen] = useState(false);
+  const studioChoice = useStudioChoice();
   const selection = useSelection();
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -1028,6 +1040,7 @@ export function CustomerApp() {
   if (studioOpen)
     content = (
       <StudioScreen
+        saved={studioChoice}
         back={() => setStudioOpen(false)}
         catalog={() => catalog()}
       />
@@ -1050,6 +1063,7 @@ export function CustomerApp() {
       />
     ) : (
       <CatalogScreen
+        onStudio={() => setStudioOpen(true)}
         categoryId={categoryId}
         onCategory={setCategoryId}
         onProduct={open}

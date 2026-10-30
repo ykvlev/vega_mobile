@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -8,8 +8,10 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { studioUrl, type StudioPhase } from './studio-policy';
+import { studioUrl, studioChoiceUrl, type StudioPhase } from './studio-policy';
 import { StudioTransport } from './studio-transport';
+import type { StudioChoice } from '@vega/contracts';
+import type { useStudioChoice } from './studio-choice';
 import { palette } from './mobile-styles';
 
 declare const __DEV__: boolean;
@@ -17,14 +19,18 @@ declare const __DEV__: boolean;
 export function StudioScreen({
   back,
   catalog,
+  saved,
 }: {
   back: () => void;
   catalog: () => void;
+  saved: ReturnType<typeof useStudioChoice>;
 }) {
   const insets = useSafeAreaInsets();
   const [attempt, setAttempt] = useState(0);
   const [phase, setPhase] = useState<StudioPhase>('loading');
-  const uri = studioUrl({
+  const initial = useRef<StudioChoice | null>(null);
+  if (saved.ready && !initial.current) initial.current = saved.choice;
+  const entry = studioUrl({
     configured: process.env.EXPO_PUBLIC_STUDIO_URL,
     platform: Platform.OS,
     development: typeof __DEV__ !== 'undefined' && __DEV__,
@@ -34,6 +40,14 @@ export function StudioScreen({
         : undefined,
     apiOrigin: process.env.EXPO_PUBLIC_API_URL,
   });
+  const uri =
+    entry && initial.current ? studioChoiceUrl(entry, initial.current) : null;
+  const receiveChoice = useCallback(
+    (next: StudioChoice) => {
+      void saved.save(next);
+    },
+    [saved.save],
+  );
   const failure = useCallback(() => setPhase('failed'), []);
   const receive = useCallback((next: StudioPhase) => {
     setPhase((current) => (current === 'failed' ? current : next));
@@ -43,7 +57,7 @@ export function StudioScreen({
     const timeout = setTimeout(failure, 30000);
     return () => clearTimeout(timeout);
   }, [uri, phase, attempt, failure]);
-  const failed = !uri || phase === 'failed';
+  const failed = saved.ready && (!uri || phase === 'failed');
   return (
     <View testID="studio-screen" style={s.screen}>
       <View style={[s.header, { paddingTop: insets.top + 8 }]}>
@@ -78,6 +92,7 @@ export function StudioScreen({
               <Pressable
                 accessibilityRole="button"
                 onPress={() => {
+                  initial.current = saved.choice;
                   setPhase('loading');
                   setAttempt((value) => value + 1);
                 }}
@@ -89,12 +104,15 @@ export function StudioScreen({
           </View>
         ) : (
           <>
-            <StudioTransport
-              key={attempt}
-              uri={uri}
-              onPhase={receive}
-              onFailure={failure}
-            />
+            {uri && (
+              <StudioTransport
+                key={attempt}
+                uri={uri}
+                onPhase={receive}
+                onChoice={receiveChoice}
+                onFailure={failure}
+              />
+            )}
             {phase === 'loading' && (
               <View
                 style={[s.notice, s.loading]}
@@ -107,6 +125,24 @@ export function StudioScreen({
           </>
         )}
       </View>
+      {saved.error && (
+        <View style={s.storageNotice}>
+          <Text accessibilityRole="alert" style={s.disclaimer}>
+            Не удалось восстановить или сохранить выбор на устройстве. Текущий
+            цвет остаётся доступен в приложении.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Повторить сохранение выбора"
+            onPress={() => {
+              void saved.save(saved.choice);
+            }}
+            style={s.button}
+          >
+            <Text style={s.action}>Повторить сохранение выбора</Text>
+          </Pressable>
+        </View>
+      )}
       <Text style={s.disclaimer}>
         Демонстрационные цвета. Для выбора плёнки нужен реальный образец.
       </Text>
@@ -156,6 +192,11 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   retryText: { color: palette.paper, fontSize: 12, textTransform: 'uppercase' },
+  storageNotice: {
+    borderTopWidth: 1,
+    borderTopColor: palette.line,
+    alignItems: 'center',
+  },
   disclaimer: {
     color: palette.muted,
     fontSize: 10,

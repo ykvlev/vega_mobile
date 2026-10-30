@@ -1,3 +1,9 @@
+import {
+  StudioChoiceMessageSchema,
+  StudioChoiceSchema,
+  type StudioChoice,
+} from '@vega/contracts';
+
 export type StudioPhase = 'loading' | 'ready' | 'failed' | 'paused';
 
 // Public scene status only. No credentials, model URLs or commands cross this boundary.
@@ -71,4 +77,34 @@ export function studioUrl({
 export function allowsStudioNavigation(target: string, entry: string): boolean {
   // Deliberately reject fragments, queries, redirects and every other route/scheme.
   return target === entry;
+}
+
+// Only a validated public choice can be added to the fixed scene URL. It is
+// initial state, not a navigation target, shader or executable command.
+export function studioChoiceUrl(entry: string, choice: StudioChoice): string {
+  const valid = StudioChoiceSchema.parse(choice);
+  const url = new URL(entry);
+  if (
+    url.pathname !== '/configurator3d/embed' ||
+    url.search ||
+    url.hash ||
+    url.username ||
+    url.password
+  )
+    throw new Error('Invalid studio entry');
+  url.searchParams.set('color', valid.color);
+  url.searchParams.set('finish', valid.finish);
+  return url.href;
+}
+
+export function studioChoiceMessage(message: unknown): StudioChoice | null {
+  try {
+    const encoded =
+      typeof message === 'string' ? message : JSON.stringify(message);
+    if (!encoded || encoded.length > 256) return null;
+    const parsed = StudioChoiceMessageSchema.safeParse(JSON.parse(encoded));
+    return parsed.success ? parsed.data.choice : null;
+  } catch {
+    return null;
+  }
 }

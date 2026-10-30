@@ -248,3 +248,12 @@ export function toPublicProduct(source: unknown): PublicProduct {
 }
 
 export * from './sale-rules';
+
+export {
+  STUDIO_COLOR_IDS,
+  STUDIO_FINISH_IDS,
+  StudioChoiceSchema,
+  StudioChoiceMessageSchema,
+  DEFAULT_STUDIO_CHOICE,
+  type StudioChoice,
+} from './studio';

@@ -1,10 +1,15 @@
 import { WebView } from 'react-native-webview';
-import { allowsStudioNavigation, studioPhase } from './studio-policy';
+import {
+  allowsStudioNavigation,
+  studioPhase,
+  studioChoiceMessage,
+} from './studio-policy';
 import type { StudioTransportProps } from './studio-transport.types';
 
 export function StudioTransport({
   uri,
   onPhase,
+  onChoice,
   onFailure,
 }: StudioTransportProps) {
   return (
@@ -25,6 +30,8 @@ export function StudioTransport({
         if (!allowsStudioNavigation(event.nativeEvent.url, uri)) return;
         const phase = studioPhase(event.nativeEvent.data);
         if (phase) onPhase(phase);
+        const choice = studioChoiceMessage(event.nativeEvent.data);
+        if (choice) onChoice(choice);
       }}
       onError={onFailure}
       onHttpError={onFailure}
